@@ -1,0 +1,7 @@
+<router-outlet (activate)="pageReady.set(true)" />
+@if (!embedded && !pageReady()) {
+  <div class="aa-startup" role="status">
+    <span class="aa-startup-indicator" aria-hidden="true"></span>
+    <span>Loading Miyya…</span>
+  </div>
+}

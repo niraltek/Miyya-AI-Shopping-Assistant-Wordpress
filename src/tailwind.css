@@ -1,0 +1,870 @@
+/* Tailwind is imported layer-by-layer, deliberately WITHOUT preflight.css.
+ *
+ * Both decisions below were forced by an arrangement that NO LONGER EXISTS: the bundle
+ * used to be enqueued into the wp-admin document itself, so it shared one cascade with
+ * core's admin stylesheets. It is now served inside an iframe (AA_Admin_App) with its
+ * own document, and the storefront widget always was — so neither constraint binds any
+ * more. Both are kept because the app is built and visually regression-tested against
+ * them, not because they are still required; the reasons are recorded so that whoever
+ * revisits this knows what they are undoing rather than rediscovering it.
+ *
+ * Preflight's resets are global element selectors, and in a shared document they
+ * restyled every page of the merchant's own WordPress admin: `a { color: inherit }`
+ * stripped the blue from every admin link,
+ * `button, input { border-radius: 0; background: transparent }` flattened every core
+ * form control, `img, svg { display: block }` broke dashicon alignment, and
+ * `h1..h6 { font-size: inherit }` collapsed core headings. The equivalent reset scoped
+ * to `app-root` (see @layer base below) is what replaced it, and it is what every
+ * component is styled against today.
+ *
+ * Utilities are imported WITHOUT layer() for the same historical reason. A cascade layer
+ * always loses to unlayered CSS, whatever the specificity or source order — and
+ * wp-admin's own stylesheets are unlayered. wp-admin defines `.hidden { display: none }`
+ * (wp-admin/css/common.css), so a layered `sm:block` could never turn an element back
+ * on: the desktop tab bar (`hidden sm:block`) stayed invisible inside WordPress no
+ * matter the screen width. */
+@layer theme, base, components;
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/utilities.css';
+
+/* Typography for content this app does not author.
+ *
+ * A rendered answer is a tree of tags that arrives at runtime from a language model, so
+ * there is no template to hang utility classes on - the only options are hand-written
+ * element rules or a package that already ships them. This is that package: `prose` styles
+ * p / ul / ol / table / code / pre / blockquote / h1-h6 in one class, keeps the scale
+ * relative so the bubble's own text size stays the single source of truth, and inverts for
+ * dark mode with `dark:prose-invert` rather than a second hand-maintained colour set. */
+@plugin '@tailwindcss/typography';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Miyya brand blue, #072D73 (oklch 32.2% 0.128 261.4), from the brand pack's
+ * 06_Brand_Guidelines. The 700 step IS the brand colour, written as the hex so it can never
+ * drift: it is what the chat header gradient ends on and what accent text uses on white, so
+ * the product reads as the logo. 600 and below are the lighter steps for buttons and
+ * highlights; 800-950 the darker ones. This is the default accent (:root), which is why it
+ * shares the selector - a merchant who picks another accent in Settings still gets theirs. */
+:root,
+[data-accent='miyya'] {
+    --accent-50: oklch(97% 0.012 261.4);
+    --accent-100: oklch(93.5% 0.026 261.4);
+    --accent-200: oklch(87% 0.056 261.4);
+    --accent-300: oklch(77% 0.1 261.4);
+    --accent-400: oklch(64% 0.15 261.4);
+    --accent-500: oklch(52% 0.17 261.4);
+    --accent-600: oklch(42% 0.16 261.4);
+    --accent-700: #072d73;
+    --accent-800: oklch(27.5% 0.11 261.4);
+    --accent-900: oklch(22.5% 0.09 261.4);
+    --accent-950: oklch(17.5% 0.07 261.4);
+}
+
+[data-accent='indigo'] {
+    --accent-50: oklch(96.2% 0.018 272.314);
+    --accent-100: oklch(93% 0.034 272.788);
+    --accent-200: oklch(87% 0.065 274.039);
+    --accent-300: oklch(78.5% 0.115 274.713);
+    --accent-400: oklch(67.3% 0.182 276.935);
+    --accent-500: oklch(58.5% 0.233 277.117);
+    --accent-600: oklch(51.1% 0.262 276.966);
+    --accent-700: oklch(45.7% 0.24 277.023);
+    --accent-800: oklch(39.8% 0.195 277.366);
+    --accent-900: oklch(35.9% 0.144 278.697);
+    --accent-950: oklch(25.7% 0.09 281.288);
+}
+
+[data-accent='blue'] {
+    --accent-50: oklch(97% 0.014 254.604);
+    --accent-100: oklch(93.2% 0.032 255.585);
+    --accent-200: oklch(88.2% 0.059 254.128);
+    --accent-300: oklch(80.9% 0.105 251.813);
+    --accent-400: oklch(70.7% 0.165 254.624);
+    --accent-500: oklch(62.3% 0.214 259.815);
+    --accent-600: oklch(54.6% 0.245 262.881);
+    --accent-700: oklch(48.8% 0.243 264.376);
+    --accent-800: oklch(42.4% 0.199 265.638);
+    --accent-900: oklch(37.9% 0.146 265.522);
+    --accent-950: oklch(28.2% 0.091 267.935);
+}
+
+[data-accent='emerald'] {
+    --accent-50: oklch(97.9% 0.021 166.113);
+    --accent-100: oklch(95% 0.052 163.051);
+    --accent-200: oklch(90.5% 0.093 164.15);
+    --accent-300: oklch(84.5% 0.143 164.978);
+    --accent-400: oklch(76.5% 0.177 163.223);
+    --accent-500: oklch(69.6% 0.17 162.48);
+    --accent-600: oklch(59.6% 0.145 163.225);
+    --accent-700: oklch(50.8% 0.118 165.612);
+    --accent-800: oklch(43.2% 0.095 166.913);
+    --accent-900: oklch(37.8% 0.077 168.94);
+    --accent-950: oklch(26.2% 0.051 172.552);
+}
+
+[data-accent='rose'] {
+    --accent-50: oklch(96.9% 0.015 12.422);
+    --accent-100: oklch(94.1% 0.03 12.58);
+    --accent-200: oklch(89.2% 0.058 10.001);
+    --accent-300: oklch(81% 0.117 11.638);
+    --accent-400: oklch(71.2% 0.194 13.428);
+    --accent-500: oklch(64.5% 0.246 16.439);
+    --accent-600: oklch(58.6% 0.253 17.585);
+    --accent-700: oklch(51.4% 0.222 16.935);
+    --accent-800: oklch(45.5% 0.188 13.697);
+    --accent-900: oklch(41% 0.159 10.272);
+    --accent-950: oklch(27.1% 0.105 12.094);
+}
+
+[data-accent='violet'] {
+    --accent-50: oklch(96.9% 0.016 293.756);
+    --accent-100: oklch(94.3% 0.029 294.588);
+    --accent-200: oklch(89.4% 0.057 293.283);
+    --accent-300: oklch(81.1% 0.111 293.571);
+    --accent-400: oklch(70.2% 0.183 293.541);
+    --accent-500: oklch(60.6% 0.25 292.717);
+    --accent-600: oklch(54.1% 0.281 293.009);
+    --accent-700: oklch(49.1% 0.27 292.581);
+    --accent-800: oklch(43.2% 0.232 292.759);
+    --accent-900: oklch(38% 0.189 293.745);
+    --accent-950: oklch(28.3% 0.141 291.089);
+}
+
+[data-accent='amber'] {
+    --accent-50: oklch(98.7% 0.022 95.277);
+    --accent-100: oklch(96.2% 0.059 95.617);
+    --accent-200: oklch(92.4% 0.12 95.746);
+    --accent-300: oklch(87.9% 0.169 91.605);
+    --accent-400: oklch(82.8% 0.189 84.429);
+    --accent-500: oklch(76.9% 0.188 70.08);
+    --accent-600: oklch(66.6% 0.179 58.318);
+    --accent-700: oklch(55.5% 0.163 48.998);
+    --accent-800: oklch(47.3% 0.137 46.201);
+    --accent-900: oklch(41.4% 0.112 45.904);
+    --accent-950: oklch(27.9% 0.077 45.635);
+}
+
+[data-accent='red'] {
+    --accent-50: oklch(97.1% 0.013 17.38);
+    --accent-100: oklch(93.6% 0.032 17.717);
+    --accent-200: oklch(88.5% 0.062 18.334);
+    --accent-300: oklch(80.8% 0.114 19.571);
+    --accent-400: oklch(70.4% 0.191 22.216);
+    --accent-500: oklch(63.7% 0.237 25.331);
+    --accent-600: oklch(57.7% 0.245 27.325);
+    --accent-700: oklch(50.5% 0.213 27.518);
+    --accent-800: oklch(44.4% 0.177 26.899);
+    --accent-900: oklch(39.6% 0.141 25.723);
+    --accent-950: oklch(25.8% 0.092 26.042);
+}
+
+[data-accent='orange'] {
+    --accent-50: oklch(98% 0.016 73.684);
+    --accent-100: oklch(95.4% 0.038 75.164);
+    --accent-200: oklch(90.1% 0.076 70.697);
+    --accent-300: oklch(83.7% 0.128 66.29);
+    --accent-400: oklch(75% 0.183 55.934);
+    --accent-500: oklch(70.5% 0.213 47.604);
+    --accent-600: oklch(64.6% 0.222 41.116);
+    --accent-700: oklch(55.3% 0.195 38.402);
+    --accent-800: oklch(47% 0.157 37.304);
+    --accent-900: oklch(40.8% 0.123 38.172);
+    --accent-950: oklch(26.6% 0.079 36.259);
+}
+
+[data-accent='yellow'] {
+    --accent-50: oklch(98.7% 0.026 102.212);
+    --accent-100: oklch(97.3% 0.071 103.193);
+    --accent-200: oklch(94.5% 0.129 101.54);
+    --accent-300: oklch(90.5% 0.182 98.111);
+    --accent-400: oklch(85.2% 0.199 91.936);
+    --accent-500: oklch(79.5% 0.184 86.047);
+    --accent-600: oklch(68.1% 0.162 75.834);
+    --accent-700: oklch(55.4% 0.135 66.442);
+    --accent-800: oklch(47.6% 0.114 61.907);
+    --accent-900: oklch(42.1% 0.095 57.708);
+    --accent-950: oklch(28.6% 0.066 53.813);
+}
+
+[data-accent='lime'] {
+    --accent-50: oklch(98.6% 0.031 120.757);
+    --accent-100: oklch(96.7% 0.067 122.328);
+    --accent-200: oklch(93.8% 0.127 124.321);
+    --accent-300: oklch(89.7% 0.196 126.665);
+    --accent-400: oklch(84.1% 0.238 128.85);
+    --accent-500: oklch(76.8% 0.233 130.85);
+    --accent-600: oklch(64.8% 0.2 131.684);
+    --accent-700: oklch(53.2% 0.157 131.589);
+    --accent-800: oklch(45.3% 0.124 130.933);
+    --accent-900: oklch(40.5% 0.101 131.063);
+    --accent-950: oklch(27.4% 0.072 132.109);
+}
+
+[data-accent='green'] {
+    --accent-50: oklch(98.2% 0.018 155.826);
+    --accent-100: oklch(96.2% 0.044 156.743);
+    --accent-200: oklch(92.5% 0.084 155.995);
+    --accent-300: oklch(87.1% 0.15 154.449);
+    --accent-400: oklch(79.2% 0.209 151.711);
+    --accent-500: oklch(72.3% 0.219 149.579);
+    --accent-600: oklch(62.7% 0.194 149.214);
+    --accent-700: oklch(52.7% 0.154 150.069);
+    --accent-800: oklch(44.8% 0.119 151.328);
+    --accent-900: oklch(39.3% 0.095 152.535);
+    --accent-950: oklch(26.6% 0.065 152.934);
+}
+
+[data-accent='teal'] {
+    --accent-50: oklch(98.4% 0.014 180.72);
+    --accent-100: oklch(95.3% 0.051 180.801);
+    --accent-200: oklch(91% 0.096 180.426);
+    --accent-300: oklch(85.5% 0.138 181.071);
+    --accent-400: oklch(77.7% 0.152 181.912);
+    --accent-500: oklch(70.4% 0.14 182.503);
+    --accent-600: oklch(60% 0.118 184.704);
+    --accent-700: oklch(51.1% 0.096 186.391);
+    --accent-800: oklch(43.7% 0.078 188.216);
+    --accent-900: oklch(38.6% 0.063 188.416);
+    --accent-950: oklch(27.7% 0.046 192.524);
+}
+
+[data-accent='cyan'] {
+    --accent-50: oklch(98.4% 0.019 200.873);
+    --accent-100: oklch(95.6% 0.045 203.388);
+    --accent-200: oklch(91.7% 0.08 205.041);
+    --accent-300: oklch(86.5% 0.127 207.078);
+    --accent-400: oklch(78.9% 0.154 211.53);
+    --accent-500: oklch(71.5% 0.143 215.221);
+    --accent-600: oklch(60.9% 0.126 221.723);
+    --accent-700: oklch(52% 0.105 223.128);
+    --accent-800: oklch(45% 0.085 224.283);
+    --accent-900: oklch(39.8% 0.07 227.392);
+    --accent-950: oklch(30.2% 0.056 229.695);
+}
+
+[data-accent='sky'] {
+    --accent-50: oklch(97.7% 0.013 236.62);
+    --accent-100: oklch(95.1% 0.026 236.824);
+    --accent-200: oklch(90.1% 0.058 230.902);
+    --accent-300: oklch(82.8% 0.111 230.318);
+    --accent-400: oklch(74.6% 0.16 232.661);
+    --accent-500: oklch(68.5% 0.169 237.323);
+    --accent-600: oklch(58.8% 0.158 241.966);
+    --accent-700: oklch(50% 0.134 242.749);
+    --accent-800: oklch(44.3% 0.11 240.79);
+    --accent-900: oklch(39.1% 0.09 240.876);
+    --accent-950: oklch(29.3% 0.066 243.157);
+}
+
+[data-accent='purple'] {
+    --accent-50: oklch(97.7% 0.014 308.299);
+    --accent-100: oklch(94.6% 0.033 307.174);
+    --accent-200: oklch(90.2% 0.063 306.703);
+    --accent-300: oklch(82.7% 0.119 306.383);
+    --accent-400: oklch(71.4% 0.203 305.504);
+    --accent-500: oklch(62.7% 0.265 303.9);
+    --accent-600: oklch(55.8% 0.288 302.321);
+    --accent-700: oklch(49.6% 0.265 301.924);
+    --accent-800: oklch(43.8% 0.218 303.724);
+    --accent-900: oklch(38.1% 0.176 304.987);
+    --accent-950: oklch(29.1% 0.149 302.717);
+}
+
+[data-accent='fuchsia'] {
+    --accent-50: oklch(97.7% 0.017 320.058);
+    --accent-100: oklch(95.2% 0.037 318.852);
+    --accent-200: oklch(90.3% 0.076 319.62);
+    --accent-300: oklch(83.3% 0.145 321.434);
+    --accent-400: oklch(74% 0.238 322.16);
+    --accent-500: oklch(66.7% 0.295 322.15);
+    --accent-600: oklch(59.1% 0.293 322.896);
+    --accent-700: oklch(51.8% 0.253 323.949);
+    --accent-800: oklch(45.2% 0.211 324.591);
+    --accent-900: oklch(40.1% 0.17 325.612);
+    --accent-950: oklch(29.3% 0.136 325.661);
+}
+
+[data-accent='pink'] {
+    --accent-50: oklch(97.1% 0.014 343.198);
+    --accent-100: oklch(94.8% 0.028 342.258);
+    --accent-200: oklch(89.9% 0.061 343.231);
+    --accent-300: oklch(82.3% 0.12 346.018);
+    --accent-400: oklch(71.8% 0.202 349.761);
+    --accent-500: oklch(65.6% 0.241 354.308);
+    --accent-600: oklch(59.2% 0.249 0.584);
+    --accent-700: oklch(52.5% 0.223 3.958);
+    --accent-800: oklch(45.9% 0.187 3.815);
+    --accent-900: oklch(40.8% 0.153 2.432);
+    --accent-950: oklch(28.4% 0.109 3.907);
+}
+
+[data-accent='slate'] {
+    --accent-50: oklch(98.4% 0.003 247.858);
+    --accent-100: oklch(96.8% 0.007 247.896);
+    --accent-200: oklch(92.9% 0.013 255.508);
+    --accent-300: oklch(86.9% 0.022 252.894);
+    --accent-400: oklch(70.4% 0.04 256.788);
+    --accent-500: oklch(55.4% 0.046 257.417);
+    --accent-600: oklch(44.6% 0.043 257.281);
+    --accent-700: oklch(37.2% 0.044 257.287);
+    --accent-800: oklch(27.9% 0.041 260.031);
+    --accent-900: oklch(20.8% 0.042 265.755);
+    --accent-950: oklch(12.9% 0.042 264.695);
+}
+
+[data-accent='gray'] {
+    --accent-50: oklch(98.5% 0.002 247.839);
+    --accent-100: oklch(96.7% 0.003 264.542);
+    --accent-200: oklch(92.8% 0.006 264.531);
+    --accent-300: oklch(87.2% 0.01 258.338);
+    --accent-400: oklch(70.7% 0.022 261.325);
+    --accent-500: oklch(55.1% 0.027 264.364);
+    --accent-600: oklch(44.6% 0.03 256.802);
+    --accent-700: oklch(37.3% 0.034 259.733);
+    --accent-800: oklch(27.8% 0.033 256.848);
+    --accent-900: oklch(21% 0.034 264.665);
+    --accent-950: oklch(13% 0.028 261.692);
+}
+
+[data-accent='zinc'] {
+    --accent-50: oklch(98.5% 0 0);
+    --accent-100: oklch(96.7% 0.001 286.375);
+    --accent-200: oklch(92% 0.004 286.32);
+    --accent-300: oklch(87.1% 0.006 286.286);
+    --accent-400: oklch(70.5% 0.015 286.067);
+    --accent-500: oklch(55.2% 0.016 285.938);
+    --accent-600: oklch(44.2% 0.017 285.786);
+    --accent-700: oklch(37% 0.013 285.805);
+    --accent-800: oklch(27.4% 0.006 286.033);
+    --accent-900: oklch(21% 0.006 285.885);
+    --accent-950: oklch(14.1% 0.005 285.823);
+}
+
+[data-accent='neutral'] {
+    --accent-50: oklch(98.5% 0 0);
+    --accent-100: oklch(97% 0 0);
+    --accent-200: oklch(92.2% 0 0);
+    --accent-300: oklch(87% 0 0);
+    --accent-400: oklch(70.8% 0 0);
+    --accent-500: oklch(55.6% 0 0);
+    --accent-600: oklch(43.9% 0 0);
+    --accent-700: oklch(37.1% 0 0);
+    --accent-800: oklch(26.9% 0 0);
+    --accent-900: oklch(20.5% 0 0);
+    --accent-950: oklch(14.5% 0 0);
+}
+
+[data-accent='stone'] {
+    --accent-50: oklch(98.5% 0.001 106.423);
+    --accent-100: oklch(97% 0.001 106.424);
+    --accent-200: oklch(92.3% 0.003 48.717);
+    --accent-300: oklch(86.9% 0.005 56.366);
+    --accent-400: oklch(70.9% 0.01 56.259);
+    --accent-500: oklch(55.3% 0.013 58.071);
+    --accent-600: oklch(44.4% 0.011 73.639);
+    --accent-700: oklch(37.4% 0.01 67.558);
+    --accent-800: oklch(26.8% 0.007 34.298);
+    --accent-900: oklch(21.6% 0.006 56.043);
+    --accent-950: oklch(14.7% 0.004 49.25);
+}
+
+[data-accent='taupe'] {
+    --accent-50: oklch(98.6% 0.002 67.8);
+    --accent-100: oklch(96% 0.002 17.2);
+    --accent-200: oklch(92.2% 0.005 34.3);
+    --accent-300: oklch(86.8% 0.007 39.5);
+    --accent-400: oklch(71.4% 0.014 41.2);
+    --accent-500: oklch(54.7% 0.021 43.1);
+    --accent-600: oklch(43.8% 0.017 39.3);
+    --accent-700: oklch(36.7% 0.016 35.7);
+    --accent-800: oklch(26.8% 0.011 36.5);
+    --accent-900: oklch(21.4% 0.009 43.1);
+    --accent-950: oklch(14.7% 0.004 49.3);
+}
+
+[data-accent='mauve'] {
+    --accent-50: oklch(98.5% 0 0);
+    --accent-100: oklch(96% 0.003 325.6);
+    --accent-200: oklch(92.2% 0.005 325.62);
+    --accent-300: oklch(86.5% 0.012 325.68);
+    --accent-400: oklch(71.1% 0.019 323.02);
+    --accent-500: oklch(54.2% 0.034 322.5);
+    --accent-600: oklch(43.5% 0.029 321.78);
+    --accent-700: oklch(36.4% 0.029 323.89);
+    --accent-800: oklch(26.3% 0.024 320.12);
+    --accent-900: oklch(21.2% 0.019 322.12);
+    --accent-950: oklch(14.5% 0.008 326);
+}
+
+[data-accent='mist'] {
+    --accent-50: oklch(98.7% 0.002 197.1);
+    --accent-100: oklch(96.3% 0.002 197.1);
+    --accent-200: oklch(92.5% 0.005 214.3);
+    --accent-300: oklch(87.2% 0.007 219.6);
+    --accent-400: oklch(72.3% 0.014 214.4);
+    --accent-500: oklch(56% 0.021 213.5);
+    --accent-600: oklch(45% 0.017 213.2);
+    --accent-700: oklch(37.8% 0.015 216);
+    --accent-800: oklch(27.5% 0.011 216.9);
+    --accent-900: oklch(21.8% 0.008 223.9);
+    --accent-950: oklch(14.8% 0.004 228.8);
+}
+
+[data-accent='olive'] {
+    --accent-50: oklch(98.8% 0.003 106.5);
+    --accent-100: oklch(96.6% 0.005 106.5);
+    --accent-200: oklch(93% 0.007 106.5);
+    --accent-300: oklch(88% 0.011 106.6);
+    --accent-400: oklch(73.7% 0.021 106.9);
+    --accent-500: oklch(58% 0.031 107.3);
+    --accent-600: oklch(46.6% 0.025 107.3);
+    --accent-700: oklch(39.4% 0.023 107.4);
+    --accent-800: oklch(28.6% 0.016 107.4);
+    --accent-900: oklch(22.8% 0.013 107.4);
+    --accent-950: oklch(15.3% 0.006 107.1);
+}
+
+[data-accent='custom'] {
+    --accent-50: oklch(from var(--accent-base) 0.971 calc(c * 0.25) h);
+    --accent-100: oklch(from var(--accent-base) 0.936 calc(c * 0.4) h);
+    --accent-200: oklch(from var(--accent-base) 0.885 calc(c * 0.6) h);
+    --accent-300: oklch(from var(--accent-base) 0.808 calc(c * 0.8) h);
+    --accent-400: oklch(from var(--accent-base) 0.704 calc(c * 0.95) h);
+    --accent-500: oklch(from var(--accent-base) 0.637 c h);
+    --accent-600: oklch(from var(--accent-base) 0.577 c h);
+    --accent-700: oklch(from var(--accent-base) 0.505 calc(c * 0.92) h);
+    --accent-800: oklch(from var(--accent-base) 0.444 calc(c * 0.78) h);
+    --accent-900: oklch(from var(--accent-base) 0.396 calc(c * 0.62) h);
+    --accent-950: oklch(from var(--accent-base) 0.258 calc(c * 0.45) h);
+}
+
+@theme inline {
+    --color-accent-50: var(--accent-50);
+    --color-accent-100: var(--accent-100);
+    --color-accent-200: var(--accent-200);
+    --color-accent-300: var(--accent-300);
+    --color-accent-400: var(--accent-400);
+    --color-accent-500: var(--accent-500);
+    --color-accent-600: var(--accent-600);
+    --color-accent-700: var(--accent-700);
+    --color-accent-800: var(--accent-800);
+    --color-accent-900: var(--accent-900);
+    --color-accent-950: var(--accent-950);
+}
+
+/* ---------------------------------------------------------------------------
+ * Scoped reset — replaces Tailwind's global preflight.
+ *
+ * Every selector is a descendant of `app-root`, so nothing here can reach the
+ * host page's markup — which matters less than it used to, now that both places
+ * the plugin renders this app are iframes with their own document, but still
+ * holds under `ng serve` where app-root mounts straight into a shared <body>.
+ * ------------------------------------------------------------------------- */
+@layer base {
+    app-root :is(
+        app-catalog-progress-component,
+        app-catalog-sync-component,
+        app-catalog-sync-scope-component,
+        app-dashboard-component,
+        app-setup-component,
+        app-connect-component,
+        app-connect-error-component,
+        app-connected-component,
+        app-settings-component,
+        app-miyya-mark
+    ) {
+        @apply block;
+    }
+
+    app-root app-chat-component {
+        @apply contents;
+    }
+
+    app-root {
+        display: block;
+        /* Fill the viewport so the page background reaches the bottom even on short
+         * screens. Inside the wp-admin frame `100vh` resolves against the frame, not
+         * the admin page, so this fills exactly the box the plugin sized — one
+         * scrollbar, inside the frame. */
+        min-height: 100vh;
+        line-height: 1.5;
+        -webkit-text-size-adjust: 100%;
+        tab-size: 4;
+        font-family: var(--default-font-family, ui-sans-serif, system-ui, sans-serif);
+        font-feature-settings: var(--default-font-feature-settings, normal);
+        font-variation-settings: var(--default-font-variation-settings, normal);
+        @apply bg-slate-50 text-slate-800 antialiased dark:bg-slate-950 dark:text-slate-100;
+    }
+
+    /* Any document that mounts <app-root> straight into <body> — `ng serve`, and the
+     * wp-admin frame, whose index.html does exactly that: this bundle ships no
+     * preflight, so the UA stylesheet's `body { margin: 8px }` survives and frames the
+     * whole app in an 8px band of bare canvas — the pale strip around every edge, which
+     * under dark mode reads as a light border the design never asked for. The canvas
+     * behind the page (overscroll, and anything past app-root) is painted from <html>,
+     * so both elements need the app's own background to match.
+     *
+     * `:has(> app-root)` keeps this to that case. It is why no rule here has to know
+     * about wp-admin any more: the plugin's admin page holds an iframe, so WordPress'
+     * own <body> is in a different document entirely and cannot match. The storefront
+     * widget also mounts app-root directly in its srcdoc <body>, but that document's
+     * inline reset sets `background: transparent !important`, which still wins. */
+    html:has(> body > app-root),
+    body:has(> app-root) {
+        margin: 0;
+        @apply bg-slate-50;
+    }
+
+    /* Dark is spelled out rather than written as `dark:bg-slate-950` above: the
+     * `dark` variant appends `:where(.dark, .dark *)` to each selector in the list,
+     * which lands outside the `:has(...)` parenthesis and compiles to a malformed,
+     * silently-dropped rule. ThemeService puts `.dark` on <html>, hence these two. */
+    html.dark:has(> body > app-root),
+    html.dark > body:has(> app-root) {
+        @apply bg-slate-950;
+    }
+
+    app-root,
+    app-root *,
+    app-root *::before,
+    app-root *::after {
+        box-sizing: border-box;
+        /* `border: 0 solid` is what makes Tailwind's `border` utilities work — they
+         * only set border-width and rely on the reset for style and colour. */
+        border: 0 solid;
+        margin: 0;
+        padding: 0;
+    }
+
+    app-root h1,
+    app-root h2,
+    app-root h3,
+    app-root h4,
+    app-root h5,
+    app-root h6 {
+        font-size: inherit;
+        font-weight: inherit;
+    }
+
+    app-root a {
+        color: inherit;
+        text-decoration: inherit;
+    }
+
+    app-root ol,
+    app-root ul,
+    app-root menu {
+        list-style: none;
+    }
+
+    app-root img,
+    app-root svg,
+    app-root video,
+    app-root canvas,
+    app-root iframe {
+        display: block;
+        vertical-align: middle;
+    }
+
+    app-root img,
+    app-root video {
+        max-width: 100%;
+        height: auto;
+    }
+
+    app-root button,
+    app-root input,
+    app-root select,
+    app-root optgroup,
+    app-root textarea {
+        font: inherit;
+        letter-spacing: inherit;
+        color: inherit;
+        border-radius: 0;
+        background-color: transparent;
+        opacity: 1;
+    }
+
+    app-root button,
+    app-root input:where([type='button'], [type='reset'], [type='submit']) {
+        appearance: button;
+        cursor: pointer;
+    }
+
+    app-root button:disabled {
+        cursor: default;
+    }
+
+    app-root :where(button, [role='button'], a, input, select, textarea):focus-visible {
+        outline: 2px solid var(--accent-500);
+        outline-offset: 2px;
+    }
+
+    app-root ::placeholder {
+        opacity: 1;
+        color: color-mix(in oklab, currentColor 50%, transparent);
+    }
+
+    app-root table {
+        text-indent: 0;
+        border-color: inherit;
+        border-collapse: collapse;
+    }
+
+    app-root [hidden] {
+        display: none !important;
+    }
+}
+
+/* ---------------------------------------------------------------------------
+ * Motion
+ *
+ * Every animation below is decorative: it communicates state that the text
+ * already states outright, so it is safe to flatten under Reduce Motion. The
+ * override is scoped to app-root and kills duration rather than the rule itself,
+ * so animation-fill-mode still applies and elements that fade IN stay visible
+ * instead of being stuck at opacity 0.
+ * ------------------------------------------------------------------------- */
+@keyframes aa-rise {
+    from {
+        opacity: 0;
+        transform: translateY(0.75rem);
+    }
+
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+@keyframes aa-fade {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes aa-pop {
+    0% {
+        opacity: 0;
+        transform: scale(0.85);
+    }
+
+    60% {
+        transform: scale(1.04);
+    }
+
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes aa-shimmer {
+    from {
+        background-position: -150% 0;
+    }
+
+    to {
+        background-position: 250% 0;
+    }
+}
+
+@keyframes aa-drift {
+    0%,
+    100% {
+        transform: translate3d(0, 0, 0) scale(1);
+    }
+
+    50% {
+        transform: translate3d(0, -6%, 0) scale(1.08);
+    }
+}
+
+@keyframes aa-sweep {
+    from {
+        transform: translateX(-100%);
+    }
+
+    to {
+        transform: translateX(300%);
+    }
+}
+
+/* Chat launcher mascot: a gentle whole-body bob so it reads as airborne. */
+@keyframes aa-mascot-float {
+    0%,
+    100% {
+        transform: translateY(0) rotate(-2deg);
+    }
+
+    50% {
+        transform: translateY(-10px) rotate(2deg);
+    }
+}
+
+/* The mascot's cape, layered and animated separately from the body (see chat-component.html)
+ * so it reads as fabric fluttering in the wind of flight rather than moving in lockstep with
+ * a rigid figure. Faster than the body's float and out of phase with it by construction —
+ * different durations mean the two drift in and out of sync instead of visibly repeating together. */
+@keyframes aa-cape-flutter {
+    0%,
+    100% {
+        transform: rotate(-6deg) skewX(-4deg) scaleX(0.97);
+    }
+
+    50% {
+        transform: rotate(8deg) skewX(6deg) scaleX(1.05);
+    }
+}
+
+/* Entrance animations. `backwards` fill keeps the element invisible during the
+ * stagger delay rather than flashing at full opacity first. */
+@utility aa-rise {
+    animation: aa-rise 0.5s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+
+@utility aa-fade {
+    animation: aa-fade 0.4s ease-out backwards;
+}
+
+@utility aa-pop {
+    animation: aa-pop 0.45s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+
+/* Ambient background blob motion — slow enough to read as depth, not activity. */
+@utility aa-drift {
+    animation: aa-drift 14s ease-in-out infinite;
+}
+
+@utility aa-mascot-float {
+    animation: aa-mascot-float 3.2s ease-in-out infinite;
+}
+
+@utility aa-cape-flutter {
+    animation: aa-cape-flutter 1.6s ease-in-out infinite;
+    transform-origin: 15% 15%;
+}
+
+/* Skeleton placeholder. Research on perceived performance consistently puts
+ * structured skeletons ahead of spinners for content-shaped waits, so these are
+ * used wherever the shape of the result is known in advance. */
+@utility aa-skeleton {
+    background-image: linear-gradient(
+        90deg,
+        var(--color-slate-200) 0%,
+        var(--color-slate-100) 50%,
+        var(--color-slate-200) 100%
+    );
+    background-size: 200% 100%;
+    animation: aa-shimmer 1.6s linear infinite;
+
+    &:where(.dark *) {
+        background-image: linear-gradient(
+            90deg,
+            var(--color-slate-800) 0%,
+            var(--color-slate-700) 50%,
+            var(--color-slate-800) 100%
+        );
+    }
+}
+
+/* Light sweeping across an in-flight progress bar. */
+@utility aa-sweep {
+    animation: aa-sweep 1.8s ease-in-out infinite;
+}
+
+/* Staggered list entrances: set --aa-i on each item and the delay follows. */
+@utility aa-stagger {
+    animation-delay: calc(var(--aa-i, 0) * 70ms);
+}
+
+/* Card hover lift, kept as a utility so the easing stays identical everywhere. */
+@utility aa-lift {
+    transition:
+        transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+        box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+        border-color 0.25s ease;
+
+    &:hover {
+        transform: translateY(-2px);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    app-root *,
+    app-root *::before,
+    app-root *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        animation-delay: 0ms !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+
+    app-root .aa-lift:hover {
+        transform: none !important;
+    }
+}
+
+@utility scrollbar-hide {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+
+    &::-webkit-scrollbar {
+        display: none;
+    }
+}
+
+/* The opposite of `scrollbar-hide`, for a panel where losing the scroll affordance
+ * hides content a shopper has no other way to discover — a native scrollbar that
+ * relies on hover-to-reveal, or a colour too close to its own track, reads as "there
+ * is nothing more here" even when there is. The track keeps a visible, low-contrast
+ * fill rather than staying transparent, so the scrollable channel itself is a
+ * standing cue, not just the thumb. */
+@utility scrollbar-thin {
+    /* Standard properties only where the ::-webkit-scrollbar styling below is unsupported
+     * (Firefox). Chromium lets `scrollbar-width`/`scrollbar-color` override it, and on
+     * Windows that draws the classic bar with arrow buttons at both ends. */
+    @supports not selector(::-webkit-scrollbar) {
+        scrollbar-width: thin;
+        scrollbar-color: var(--color-slate-400) var(--color-slate-100);
+    }
+
+    &::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+    &::-webkit-scrollbar-button {
+        display: none;
+    }
+    &::-webkit-scrollbar-track {
+        background: var(--color-slate-100);
+    }
+    &::-webkit-scrollbar-thumb {
+        background-color: var(--color-slate-400);
+        border-radius: 9999px;
+    }
+    &::-webkit-scrollbar-thumb:hover {
+        background-color: var(--color-slate-500);
+    }
+
+    &:where(.dark *) {
+        @supports not selector(::-webkit-scrollbar) {
+            scrollbar-color: var(--color-slate-600) var(--color-slate-800);
+        }
+
+        &::-webkit-scrollbar-track {
+            background: var(--color-slate-800);
+        }
+        &::-webkit-scrollbar-thumb {
+            background-color: var(--color-slate-600);
+        }
+        &::-webkit-scrollbar-thumb:hover {
+            background-color: var(--color-slate-500);
+        }
+    }
+}

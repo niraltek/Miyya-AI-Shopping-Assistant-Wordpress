@@ -1,0 +1,42 @@
+#ai-assistant-wrapper {
+	position: fixed;
+	inset: var(--wp-admin--admin-bar--height, 32px) 0 0 160px;
+	overflow: hidden;
+	background: #fff;
+}
+
+body.folded #ai-assistant-wrapper {
+	left: 36px;
+}
+
+@media screen and (max-width: 782px) {
+	#ai-assistant-wrapper,
+	body.folded #ai-assistant-wrapper {
+		left: 0;
+	}
+}
+
+#ai-assistant-frame {
+	display: block;
+	width: 100%;
+	height: 100%;
+	border: 0;
+}
+
+#wpfooter {
+	display: none;
+}
+
+/*
+ * The frame is fixed and scrolls its own content, but WordPress still makes the page
+ * as tall as the admin menu, which draws a second scrollbar beside the app's. Hide
+ * that one only; the menu stays reachable with the wheel or touch. This file loads
+ * on the plugin's own pages only.
+ */
+html {
+	scrollbar-width: none;
+}
+
+html::-webkit-scrollbar {
+	display: none;
+}

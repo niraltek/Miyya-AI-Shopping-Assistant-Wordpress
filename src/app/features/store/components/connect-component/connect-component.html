@@ -1,0 +1,479 @@
+<div class="px-4 py-5 sm:px-8 sm:py-6 lg:px-10">
+  <div class="grid grid-cols-1 gap-8 lg:grid-cols-2 lg:items-start lg:gap-12">
+    <div class="aa-rise lg:pt-1">
+      <h1 class="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl dark:text-slate-50">
+        Connect your store
+      </h1>
+      <p class="mt-3 max-w-md text-sm text-slate-500 dark:text-slate-400">
+        Confirm your store details to connect securely in just a few seconds.
+      </p>
+
+      <div class="mt-7 max-w-md space-y-5">
+        <div class="flex items-start gap-3">
+          <span
+            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-600 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-400"
+          >
+            <svg lucideShieldCheck class="h-4.5 w-4.5"></svg>
+          </span>
+          <div>
+            <p class="text-sm font-semibold text-slate-800 dark:text-slate-100">
+              Secure connection
+            </p>
+            <p class="text-xs text-slate-500 dark:text-slate-400">
+              Your data stays private and protected.
+            </p>
+          </div>
+        </div>
+
+        <div class="flex items-start gap-3">
+          <span
+            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-blue-200 bg-blue-50 text-blue-600 dark:border-blue-500/30 dark:bg-blue-500/10 dark:text-blue-400"
+          >
+            <svg lucideEye class="h-4.5 w-4.5"></svg>
+          </span>
+          <div>
+            <p class="text-sm font-semibold text-slate-800 dark:text-slate-100">Read-only access</p>
+            <p class="text-xs text-slate-500 dark:text-slate-400">
+              We only view your products. Nothing is ever changed.
+            </p>
+          </div>
+        </div>
+
+        <div class="flex items-start gap-3">
+          <span
+            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-violet-200 bg-violet-50 text-violet-600 dark:border-violet-500/30 dark:bg-violet-500/10 dark:text-violet-400"
+          >
+            <svg lucideClipboardCheck class="h-4.5 w-4.5"></svg>
+          </span>
+          <div>
+            <p class="text-sm font-semibold text-slate-800 dark:text-slate-100">
+              Works with any WooCommerce store
+            </p>
+            <p class="text-xs text-slate-500 dark:text-slate-400">
+              Self-hosted or WordPress.com, no extra setup.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div aria-hidden="true" class="mt-8 hidden sm:block">
+        <img [src]="connectStoreImageSrc" alt="" class="mx-auto w-full max-w-sm object-contain" />
+        <div class="mx-auto mt-4 max-w-md text-center">
+          <p class="text-sm font-semibold text-slate-800 dark:text-slate-100">
+            Connect once, Miyya does the rest
+          </p>
+          <p class="mt-1 text-xs text-balance text-slate-500 dark:text-slate-400">
+            Your products sync automatically so Miyya can answer shopper questions.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div
+      class="aa-rise aa-stagger relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-6 shadow-xl sm:p-8 dark:border-slate-800 dark:bg-slate-900"
+      style="--aa-i: 1"
+    >
+      <div aria-hidden="true" class="pointer-events-none absolute inset-0 overflow-hidden">
+        <div
+          class="aa-drift pointer-events-none absolute -top-24 -right-24 h-56 w-56 rounded-full bg-linear-to-br from-accent-100 to-accent-200 blur-2xl dark:from-accent-500/10 dark:to-accent-500/5"
+        ></div>
+      </div>
+
+      <div class="relative">
+        <img [src]="logoSrc" alt="Miyya" class="mx-auto h-20 w-auto dark:hidden" />
+        <img [src]="logoWhiteSrc" alt="Miyya" class="mx-auto hidden h-20 w-auto dark:block" />
+
+        <form (ngSubmit)="openConnectionChoice()" class="mt-4" novalidate>
+          <div class="mb-2 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+            <label
+              for="aa-store-url"
+              class="block text-sm font-semibold text-slate-800 dark:text-slate-200"
+            >
+              WooCommerce Store URL
+            </label>
+            @if (hasDetectedUrl) {
+              <button
+                type="button"
+                (click)="useDetectedStore()"
+                [disabled]="isBusy() || isConnected()"
+                class="rounded text-xs font-medium text-accent-600 underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-500 disabled:cursor-not-allowed disabled:opacity-60 dark:text-accent-400"
+              >
+                Use this site ({{ detectedHost() }})
+              </button>
+            }
+          </div>
+          <input
+            id="aa-store-url"
+            type="text"
+            inputmode="url"
+            autocomplete="url"
+            placeholder="https://www.example.com"
+            [ngModel]="storeUrl()"
+            (ngModelChange)="onUrlInput($event)"
+            name="storeUrl"
+            [disabled]="isBusy() || isConnected()"
+            [attr.aria-invalid]="fieldError() ? true : null"
+            [attr.aria-describedby]="fieldError() ? 'aa-store-url-error' : null"
+            class="h-12 w-full rounded-xl border border-slate-300 bg-white px-4 text-base text-slate-900 placeholder:text-slate-400 focus:border-accent-500 focus:ring-2 focus:ring-accent-500/30 focus:outline-none disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:disabled:bg-slate-800/50"
+          />
+
+          @if (!fieldError() && hasDetectedUrl && !hostMismatch()) {
+            <p class="mt-1.5 flex items-center gap-1 text-xs text-slate-400 dark:text-slate-500">
+              <svg lucideCheck class="h-3 w-3 shrink-0 text-emerald-600"></svg>
+              Detected from your WordPress site
+            </p>
+          }
+          @if (!fieldError() && hostMismatch()) {
+            <p
+              role="status"
+              class="mt-2 flex items-start gap-1.5 text-sm text-amber-700 dark:text-amber-500"
+            >
+              <svg lucideTriangleAlert class="mt-0.5 h-3.5 w-3.5 shrink-0"></svg>
+              <span>
+                This differs from the site the plugin is installed on ({{ detectedHost() }}).
+                Connecting works only for this site — install the plugin on the other store to
+                connect it.
+              </span>
+            </p>
+          }
+          @if (fieldError() && !showConnectionChoice()) {
+            <p
+              id="aa-store-url-error"
+              role="alert"
+              class="mt-2 flex items-center gap-1.5 text-sm text-rose-600"
+            >
+              <svg lucideTriangleAlert class="h-3.5 w-3.5 shrink-0"></svg>
+              {{ fieldError() }}
+            </p>
+          }
+          @if (identityConflict()) {
+            <app-store-identity-conflict
+              [needsConnection]="!hasPendingMigration()"
+              (retry)="ngOnInit()"
+              (startMigration)="openConnectionChoice()"
+              (busyChange)="resolvingIdentity.set($event)"
+            />
+          }
+          <label
+            for="aa-store-name"
+            class="mt-5 mb-2 block text-sm font-semibold text-slate-800 dark:text-slate-200"
+          >
+            Store Name <span class="font-normal text-slate-400">(optional)</span>
+          </label>
+          <input
+            id="aa-store-name"
+            type="text"
+            autocomplete="organization"
+            [placeholder]="detectedHost() || 'Your store name'"
+            [ngModel]="storeName()"
+            (ngModelChange)="storeName.set($event)"
+            name="storeName"
+            [disabled]="isBusy() || isConnected()"
+            class="h-12 w-full rounded-xl border border-slate-300 bg-white px-4 text-base text-slate-900 placeholder:text-slate-400 focus:border-accent-500 focus:ring-2 focus:ring-accent-500/30 focus:outline-none disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:disabled:bg-slate-800/50"
+          />
+
+          <button
+            type="submit"
+            [disabled]="isBusy() || isConnected()"
+            [attr.aria-disabled]="isConnected() ? true : null"
+            [attr.aria-busy]="isBusy()"
+            class="aa-lift mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-linear-to-br from-accent-500 to-accent-600 text-base font-semibold text-white shadow-lg shadow-accent-500/25 outline-hidden hover:text-white focus-visible:ring-2 focus-visible:ring-accent-300 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0 dark:focus-visible:ring-offset-slate-900"
+          >
+            @if (checkingConnection()) {
+              <span
+                aria-hidden="true"
+                class="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white"
+              ></span>
+              Checking connection…
+            } @else if (isConnected()) {
+              <svg lucideCheck class="h-4 w-4"></svg>
+              Store is connected
+            } @else if (hasPendingMigration()) {
+              Connect this site as a separate store
+            } @else if (isBusy() && !showConnectionChoice()) {
+              <span
+                class="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white"
+              ></span>
+              {{ status() === 'redirecting' ? 'Redirecting…' : 'Connecting…' }}
+            } @else if (connectionCheckFailed()) {
+              Retry connection check
+            } @else {
+              Allow read-only access &amp; connect
+              <svg lucideArrowRight class="h-4 w-4"></svg>
+            }
+          </button>
+
+          @if (status() === 'redirecting' && !showConnectionChoice()) {
+            <p class="mt-3 text-center text-sm text-slate-500 dark:text-slate-400">
+              Finishing the secure connection…
+            </p>
+          }
+
+          <ul class="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-3">
+            <li
+              class="flex items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300"
+            >
+              <svg lucideShieldCheck class="h-4 w-4 shrink-0"></svg>
+              Secure connection
+            </li>
+            <li
+              class="flex items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300"
+            >
+              <svg lucideEye class="h-4 w-4 shrink-0"></svg>
+              Read-only access
+            </li>
+            <li
+              class="flex items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300"
+            >
+              <svg lucideKeyRound class="h-4 w-4 shrink-0"></svg>
+              No API keys needed
+            </li>
+          </ul>
+        </form>
+
+        <div
+          class="mt-6 flex items-start gap-3 rounded-2xl border border-emerald-100 bg-emerald-50/70 p-4 dark:border-emerald-500/20 dark:bg-emerald-500/10"
+        >
+          <span
+            class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300"
+          >
+            <svg lucideShieldCheck class="h-4.5 w-4.5"></svg>
+          </span>
+          <div>
+            <p class="text-sm font-semibold text-emerald-900 dark:text-emerald-200">
+              How your data is used
+            </p>
+            <p class="mt-0.5 text-xs text-emerald-800/80 dark:text-emerald-300/70">
+              We use secure read-only access to fetch your products. Product text and relevant chat context are sent to OpenAI for AI processing.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  @if (showConnectionChoice()) {
+    <div
+      class="fixed inset-0 z-100003 flex items-center justify-center bg-slate-950/55 p-4 backdrop-blur-sm"
+      role="presentation"
+    >
+      <section
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="connect-choice-title"
+        aria-describedby="connect-choice-description"
+        class="relative flex max-h-[calc(100dvh-2rem)] w-full max-w-[37.8rem] flex-col overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-slate-900"
+      >
+        <button
+          type="button"
+          (click)="closeConnectionChoice()"
+          [disabled]="isBusy()"
+          aria-label="Close connection options"
+          class="absolute top-3 right-3 z-10 rounded-lg bg-white p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 focus-visible:ring-2 focus-visible:ring-accent-300 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-slate-900 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+        >
+          <svg lucideX class="h-5 w-5"></svg>
+        </button>
+
+        <div class="min-h-0 overflow-y-auto overscroll-contain px-6 pt-12 pb-5 sm:px-8 sm:pt-11">
+          <div class="text-center">
+            <h2
+              id="connect-choice-title"
+              class="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-50"
+            >
+              How would you like to connect?
+            </h2>
+            <p
+              id="connect-choice-description"
+              class="mx-auto mt-2 max-w-md text-sm text-slate-500 dark:text-slate-400"
+            >
+              Both options give Miyya the same read-only access.
+            </p>
+          </div>
+
+          <div class="mt-6 space-y-3">
+            <button
+              type="button"
+              (click)="selectConnectionMode('automatic')"
+              [disabled]="isBusy()"
+              [attr.aria-pressed]="connectionMode() === 'automatic'"
+              data-testid="connect-mode-automatic"
+              class="flex w-full items-center gap-3 rounded-xl border p-4 text-left transition focus-visible:ring-2 focus-visible:ring-accent-300 disabled:cursor-wait sm:gap-4"
+              [class]="
+                connectionMode() === 'automatic'
+                  ? 'border-accent-500 bg-accent-50/70 dark:border-accent-400 dark:bg-accent-500/10'
+                  : 'border-slate-200 hover:border-slate-300 dark:border-slate-700 dark:hover:border-slate-600'
+              "
+            >
+              <span
+                class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2"
+                [class]="
+                  connectionMode() === 'automatic'
+                    ? 'border-accent-500'
+                    : 'border-slate-300 dark:border-slate-600'
+                "
+              >
+                @if (connectionMode() === 'automatic') {
+                  <span class="h-3 w-3 rounded-full bg-accent-500"></span>
+                }
+              </span>
+              <span
+                class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white text-accent-600 shadow-sm dark:bg-slate-800 dark:text-accent-300"
+                ><svg lucideZap class="h-5 w-5"></svg
+              ></span>
+              <span
+                ><span
+                  class="flex flex-wrap items-center gap-2 text-sm font-semibold text-slate-900 dark:text-slate-100"
+                  >Automatic
+                  <span
+                    class="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300"
+                    >Recommended</span
+                  ></span
+                ><span class="mt-1 block text-sm text-slate-500 dark:text-slate-400"
+                  >Miyya connects this domain as a separate store and continues setup for you.</span
+                ></span
+              >
+            </button>
+
+            <button
+              type="button"
+              (click)="selectConnectionMode('manual')"
+              [disabled]="isBusy()"
+              [attr.aria-pressed]="connectionMode() === 'manual'"
+              data-testid="connect-mode-manual"
+              class="flex w-full items-center gap-3 rounded-xl border p-4 text-left transition focus-visible:ring-2 focus-visible:ring-accent-300 disabled:cursor-wait sm:gap-4"
+              [class]="
+                connectionMode() === 'manual'
+                  ? 'border-accent-500 bg-accent-50/70 dark:border-accent-400 dark:bg-accent-500/10'
+                  : 'border-slate-200 hover:border-slate-300 dark:border-slate-700 dark:hover:border-slate-600'
+              "
+            >
+              <span
+                class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2"
+                [class]="
+                  connectionMode() === 'manual'
+                    ? 'border-accent-500'
+                    : 'border-slate-300 dark:border-slate-600'
+                "
+              >
+                @if (connectionMode() === 'manual') {
+                  <span class="h-3 w-3 rounded-full bg-accent-500"></span>
+                }
+              </span>
+              <span
+                class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"
+                ><svg lucideSettings class="h-5 w-5"></svg
+              ></span>
+              <span
+                ><span class="block text-sm font-semibold text-slate-900 dark:text-slate-100"
+                  >Manual</span
+                ><span class="mt-1 block text-sm text-slate-500 dark:text-slate-400"
+                  >Approve on WooCommerce, then follow setup at your own pace.</span
+                ></span
+              >
+            </button>
+          </div>
+
+          <label
+            class="mt-5 flex cursor-pointer items-start gap-3 border-y border-slate-100 py-4 text-sm text-slate-600 dark:border-slate-800 dark:text-slate-300"
+          >
+            <span class="relative flex h-5 w-5 shrink-0">
+              <input
+                type="checkbox"
+                [checked]="termsAccepted()"
+                [disabled]="isBusy()"
+                (change)="setTermsAccepted($any($event.target).checked)"
+                class="peer h-5 w-5 cursor-pointer appearance-none rounded-md border-2 border-slate-300 bg-white transition-colors hover:border-accent-400 checked:border-accent-500 checked:bg-accent-500 focus-visible:ring-2 focus-visible:ring-accent-300 focus-visible:ring-offset-1 focus-visible:outline-none dark:border-slate-600 dark:bg-slate-800 dark:hover:border-accent-400 dark:checked:border-accent-500 dark:checked:bg-accent-500 dark:focus-visible:ring-offset-slate-900"
+              />
+              <svg
+                lucideCheck
+                aria-hidden="true"
+                class="pointer-events-none absolute inset-0 m-auto h-3.5 w-3.5 stroke-[3] text-white opacity-0 transition-opacity peer-checked:opacity-100"
+              ></svg>
+            </span>
+            <span
+              >I authorize the disclosed
+              <button
+                type="button"
+                (click)="openTerms()"
+                [disabled]="isBusy()"
+                data-testid="connect-open-terms"
+                class="font-semibold text-accent-600 underline underline-offset-2 hover:text-accent-700 dark:text-accent-300"
+              >
+                Connection and Data Use</button
+              >.
+              <span class="text-slate-400 dark:text-slate-500"
+                >Required before connecting, including manual approval.</span
+              ></span
+            >
+          </label>
+        </div>
+
+        <div
+          class="shrink-0 border-t border-slate-100 bg-white px-6 py-5 sm:px-8 sm:pb-8 dark:border-slate-800 dark:bg-slate-900"
+        >
+          <div role="status" aria-live="polite" aria-atomic="true">
+            @if (isBusy()) {
+              <p class="mb-4 text-sm text-slate-600 dark:text-slate-300">
+                @if (status() === 'redirecting') {
+                  Opening the next step. Please keep this page open…
+                } @else if (connectionMode() === 'automatic') {
+                  Setting up your secure, read-only connection. This may take a few seconds…
+                } @else {
+                  Preparing your connection. You’ll approve read-only access on WooCommerce next…
+                }
+              </p>
+            }
+          </div>
+          @if (status() === 'error' && fieldError()) {
+            <p
+              role="alert"
+              class="mb-4 flex max-h-32 items-start gap-2 overflow-y-auto rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm wrap-anywhere text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300"
+            >
+              <svg lucideTriangleAlert aria-hidden="true" class="mt-0.5 h-4 w-4 shrink-0"></svg>
+              {{ fieldError() }}
+            </p>
+          }
+          <div class="grid grid-cols-1 gap-3 min-[400px]:grid-cols-2">
+            <button
+              type="button"
+              (click)="closeConnectionChoice()"
+              [disabled]="isBusy()"
+              class="inline-flex h-12 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-accent-300 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              (click)="connect()"
+              [disabled]="!canConnectFromChoice() || isBusy()"
+              [attr.aria-busy]="isBusy()"
+              data-testid="connect-confirm-connect"
+              class="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-accent-500 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-accent-600 focus-visible:ring-2 focus-visible:ring-accent-300"
+              [class]="
+                isBusy()
+                  ? 'disabled:cursor-wait'
+                  : 'disabled:cursor-not-allowed disabled:opacity-50'
+              "
+            >
+              @if (isBusy()) {
+                <span
+                  aria-hidden="true"
+                  class="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-white/40 border-t-white motion-reduce:animate-none"
+                ></span>
+                {{ status() === 'redirecting' ? 'Redirecting…' : 'Connecting…' }}
+              } @else {
+                {{ status() === 'error' ? 'Try again' : 'Allow & connect' }}
+                <svg lucideArrowRight aria-hidden="true" class="h-4 w-4 shrink-0"></svg>
+              }
+            </button>
+          </div>
+        </div>
+      </section>
+    </div>
+  }
+  @if (showTerms()) {
+    <div class="relative z-100004">
+      <app-terms-component (closed)="closeTerms()" />
+    </div>
+  }
+</div>

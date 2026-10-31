@@ -1,0 +1,86 @@
+@if (cart.canAdd(product())) {
+  @if (needsOptions() && !expanded() && !confirm()) {
+    <button
+      type="button"
+      (click)="expanded.set(true)"
+      [class]="layoutClass()"
+      class="rounded-lg font-semibold"
+    >
+      Choose options
+    </button>
+  } @else if (needsOptions() && !dimensions().length) {
+    <a [href]="product().productUrl" target="_top" class="text-xs underline"
+      >Choose options on product page</a
+    >
+  } @else {
+    <div class="flex flex-wrap items-end gap-2" (click)="$event.stopPropagation()">
+      @for (name of dimensions(); track name) {
+        <label class="flex min-w-0 flex-col gap-1 text-xs text-slate-700 dark:text-slate-200">
+          {{ name }}
+          <select
+            [attr.aria-label]="name + ' for ' + product().name"
+            [ngModel]="picked()[name] || ''"
+            (ngModelChange)="choose(name, $event)"
+            [disabled]="busy()"
+            class="max-w-40 rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-slate-900 dark:border-slate-600 dark:bg-slate-900 dark:text-white"
+          >
+            <option value="">Select {{ name }}</option>
+            @for (value of valuesFor(name); track value) {
+              <option [value]="value">{{ value }}</option>
+            }
+          </select>
+        </label>
+      }
+      @if (maximum() > 1) {
+        <label class="flex flex-col gap-1 text-xs text-slate-700 dark:text-slate-200">
+          Quantity
+          <input
+            type="number"
+            min="1"
+            [max]="maximum()"
+            step="1"
+            [ngModel]="quantity()"
+            (ngModelChange)="quantity.set($event)"
+            [disabled]="busy()"
+            [attr.aria-label]="'Quantity for ' + product().name"
+            class="w-16 rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-slate-900 dark:border-slate-600 dark:bg-slate-900 dark:text-white"
+          />
+        </label>
+      }
+      <button
+        type="button"
+        (click)="add()"
+        [disabled]="busy() || !valid() || (confirm() && completed())"
+        [attr.aria-label]="buttonLabel() + ': ' + product().name"
+        [class]="layoutClass()"
+        class="flex items-center justify-center gap-1.5 rounded-lg font-semibold disabled:opacity-50"
+      >
+        <svg lucideShoppingCart class="h-3.5 w-3.5" aria-hidden="true"></svg>
+        {{ busy() ? 'Adding…' : completed() && confirm() ? 'Added' : buttonLabel() }}
+      </button>
+    </div>
+    @if (selectedPrice()) {
+      <p class="mt-1 text-xs text-slate-600 dark:text-slate-300">{{ selectedPrice() }} each</p>
+    }
+  }
+  @if (state() === 'added' || (confirm() && completed())) {
+    <span
+      role="status"
+      class="mt-1 flex items-center gap-1 text-xs text-emerald-700 dark:text-emerald-300"
+    >
+      <svg lucideCheck class="h-3.5 w-3.5" aria-hidden="true"></svg> Added to cart.
+      @if (cart.cartUrl) {
+        <a [href]="cart.cartUrl" target="_top" class="underline">View cart</a>
+      }
+    </span>
+  }
+  @if (cart.errorOf(product().productId)) {
+    <p role="alert" class="mt-1 text-xs text-red-700 dark:text-red-300">
+      {{ cart.errorOf(product().productId) }}
+    </p>
+  }
+} @else if (product().cart?.status === 'out_of_stock') {
+  <span class="text-xs text-slate-500">Out of stock</span>
+} @else if (product().cart?.status === 'external' || product().cart?.status === 'grouped') {
+  <a [href]="product().productUrl" target="_top" class="text-xs underline">View buying options</a>
+}

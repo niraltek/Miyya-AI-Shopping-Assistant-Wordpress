@@ -1,0 +1,252 @@
+/* You can add global styles to this file, and also import other style files */
+
+
+/**
+ * A rendered markdown answer.
+ *
+ * Nearly all of its typography comes from packages rather than from rules written here:
+ * `@tailwindcss/typography` (the `prose` classes on the container in chat-component.html)
+ * styles every tag the model can produce, and highlight.js's own themes below colour the
+ * code. What stays in this file is only what no package could know about - the two things
+ * `utils/markdown.ts` adds to the tree itself, and two fixes for living inside a 560px
+ * iframe.
+ *
+ * Still scoped to `.aa-markdown`, for the reason it always was: this bundle is injected
+ * into wp-admin and into a storefront theme, where a bare `ul { … }` would restyle the
+ * merchant's own pages.
+ */
+
+/* Code colours, straight from the package. Light by default; the dark theme is nested so
+ * the merchant's theme choice (a `.dark` class, not the OS preference) still decides. Both
+ * files ship with highlight.js - no palette is maintained here. */
+@import 'highlight.js/styles/github.css';
+
+:where(.dark) {
+  @import 'highlight.js/styles/github-dark.css';
+}
+
+.aa-markdown {
+  // The model writes one continuous answer, so the first and last blocks must not add
+  // margin inside a bubble that already has padding. `prose` sets both.
+  > :first-child { margin-top: 0; }
+  > :last-child { margin-bottom: 0; }
+
+  // `prose` leaves a table at its natural width, which in the 560px storefront iframe
+  // pushes the whole panel out of the frame. Scrolling the table instead of the panel is
+  // the mobile-layout half of the requirement, and there is no utility for it because
+  // there is no element here to put a utility on.
+  table {
+    display: block;
+    overflow-x: auto;
+    max-width: 100%;
+  }
+
+  // Same reason, for a long unbroken token - a SKU, a URL - in running text.
+  overflow-wrap: anywhere;
+
+  // A product the answer names, linked to its own page by `utils/markdown.ts`.
+  //
+  // Weighted rather than underlined: a product name is the subject of the sentence, so it
+  // should read as emphasis a shopper can act on, not as a footnote. The accent colour is
+  // the merchant's own (`--accent-*`, swapped by ThemeService), which is exactly the kind
+  // of per-merchant value a typography package cannot supply.
+  a.aa-product-link {
+    font-weight: 600;
+    color: var(--accent-700, currentcolor);
+    text-decoration: none;
+    border-radius: 0.2em;
+
+    &:hover,
+    &:focus-visible {
+      text-decoration: underline;
+      text-decoration-thickness: 1.5px;
+      text-underline-offset: 2px;
+    }
+  }
+
+  // A rating the composer wrote (`★ 4.3`), boxed by `utils/markdown.ts`.
+  //
+  // Amber and tabular, matching the star row on the product card, so the same fact does not
+  // read as two different things on one screen.
+  .aa-rating {
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: rgb(245 158 11); // amber-500, as on the card
+    white-space: nowrap;
+  }
+}
+
+:where(.dark) .aa-markdown {
+  // The 700 step is chosen for a light bubble; on a dark one it is too close to the
+  // background to read as a link at all.
+  a.aa-product-link { color: var(--accent-300, currentcolor); }
+
+  .aa-rating { color: rgb(251 191 36); } // amber-400, matching the card's dark-mode stars
+}
+
+// Shared chat controls remain scoped to the widget, including its external drawer.
+.aa-chat-shell {
+  .aa-icon-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: 1px solid var(--control-border);
+    border-radius: 10px;
+    background: var(--control-bg);
+    color: var(--control-text);
+    cursor: pointer;
+    transition: background 160ms ease, border-color 160ms ease, color 160ms ease;
+
+    svg { width: 17px; height: 17px; }
+
+    &:hover {
+      background: color-mix(in srgb, var(--accent-500) 12%, var(--control-bg));
+      border-color: color-mix(in srgb, var(--accent-500) 45%, var(--control-border));
+      color: var(--accent-600);
+    }
+
+    &:active { background: color-mix(in srgb, var(--accent-500) 22%, var(--control-bg)); }
+  }
+
+  .aa-icon-button--danger:hover {
+    color: #e11d48;
+    border-color: #fda4af;
+    background: color-mix(in srgb, #f43f5e 10%, var(--control-bg));
+  }
+
+  .aa-chat-column button:focus-visible,
+  .aa-panel-close:focus-visible {
+    outline: 2px solid var(--accent-500);
+    outline-offset: 3px;
+  }
+}
+
+:where(.dark) .aa-chat-shell {
+  .aa-icon-button:hover { color: var(--accent-300); }
+  .aa-icon-button--danger:hover { color: #fda4af; }
+}
+
+/**
+ * The storefront widget's frame. `html[data-aa-embedded]` is set only by
+ * class-frontend-widget.php's srcdoc document, so none of this reaches the wp-admin copy of
+ * the same bundle. Global rather than in chat-component.scss because it styles the document
+ * and app-root, which a component's encapsulated styles cannot select.
+ *
+ * The frame owns the widget's size; the app inside simply fills it. The panel's own classes
+ * are viewport-relative (h-[min(80dvh,47.5rem)]), and inside an iframe a viewport unit
+ * resolves against the FRAME, not the page: a 600px frame made 80dvh 480px, leaving the
+ * panel floating with dead space around it. Overriding the intrinsic sizing makes the panel
+ * fill whatever the frame currently is, so the two can never disagree.
+ *
+ * The page and app-root are transparent because app-root carries the app's page background
+ * (bg-slate-50 / dark:bg-slate-950), which in the frame paints as a solid block wherever
+ * the panel does not cover.
+ */
+html[data-aa-embedded] {
+  &,
+  body {
+    background: transparent !important;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  app-root {
+    background: transparent !important;
+    min-height: 0 !important;
+    display: block;
+    height: 100%;
+  }
+
+  app-root div.fixed {
+    inset: 0 !important;
+    width: auto !important;
+    height: auto !important;
+    max-width: none !important;
+    max-height: none !important;
+    margin: 0 !important;
+  }
+
+  // Keep the chat anchored at 640px while only the drawer uses the extra frame space. The
+  // iframe resizes immediately; the drawer owns the animation.
+  app-root div.aa-chat-shell:not(.aa-chat-shell--expanded) {
+    left: auto !important;
+    width: min(640px, 100%) !important;
+    overflow: visible !important;
+  }
+
+  app-root .aa-chat-column {
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0 !important;
+  }
+
+  // These media queries evaluate against the iframe's viewport, not the real page's.
+  // The comparison width matches `openWideComparison` in widget.js's resize
+  // script, which allocates that much iframe space in the first place.
+  @media (min-width: 700px) {
+    app-root div.aa-chat-shell:not(.aa-chat-shell--expanded) .aa-side-panel {
+      inset: 0 calc(100% + 12px) 0 auto;
+      width: 320px;
+    }
+
+    app-root div.aa-chat-shell:not(.aa-chat-shell--expanded) .aa-side-panel--comparison {
+      width: 480px;
+    }
+  }
+
+  // The launcher stays its designed circle and centres in the small closed frame.
+  app-root button.fixed {
+    inset: 0 !important;
+    margin: auto !important;
+  }
+}
+
+/**
+ * The Left/Right design formats: the same widget docked as a full-height rail on one edge
+ * of the storefront. `data-aa-layout` is set on the srcdoc <html> by class-frontend-widget.php
+ * only for a rail, so nothing here can reach the classic panel or the wp-admin chat.
+ *
+ * The host page sizes the frame to the rail column (430px desktop, 360px tablet, the whole
+ * screen on phones) and pushes the store aside; in here the panel just stops being a
+ * floating card and fills it. Declared after the embedded rules above, at the same
+ * specificity, so these win where both apply.
+ */
+html[data-aa-layout] {
+  app-root div.aa-chat-shell:not(.aa-chat-shell--expanded) {
+    --chat-radius: 0px;
+    width: 100% !important;
+    border-radius: 0 !important;
+    border-width: 0 !important;
+    box-shadow: none !important;
+  }
+
+  // The drawer (product results, comparison) opens over the conversation inside the
+  // rail. The embedded rules above would push it outside the frame on a frame wider
+  // than 700px, which a phone-width rail can be — and outside a rail is the store.
+  app-root div.aa-chat-shell:not(.aa-chat-shell--expanded) .aa-side-panel {
+    inset: 5rem 0.5rem 7rem;
+    width: auto;
+  }
+
+  @media (max-width: 395px) {
+    app-root div.aa-chat-shell:not(.aa-chat-shell--expanded) .aa-side-panel {
+      top: 7.5rem;
+    }
+  }
+}
+
+// A thin divider on the edge that faces the store, and the open motion grows out of the
+// corner the launcher sat in.
+html[data-aa-layout='right'] app-root div.aa-chat-shell:not(.aa-chat-shell--expanded) {
+  border-left-width: 1px !important;
+}
+
+html[data-aa-layout='left'] app-root div.aa-chat-shell:not(.aa-chat-shell--expanded) {
+  border-right-width: 1px !important;
+  transform-origin: bottom left;
+}

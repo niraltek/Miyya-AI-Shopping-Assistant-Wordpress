@@ -1,0 +1,1575 @@
+<div class="mx-auto max-w-4xl px-4 py-5 sm:px-8 sm:py-8">
+  <header class="aa-rise">
+    <p class="text-sm font-medium text-slate-500 dark:text-slate-400">Miyya Setup</p>
+    <h1
+      class="mt-1 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl dark:text-slate-50"
+    >
+      @if (allDone()) {
+        Miyya is set up
+      } @else {
+        Get Miyya answering your shoppers
+      }
+    </h1>
+    <p class="mt-1.5 text-sm text-slate-500 dark:text-slate-400">
+      @if (allDone()) {
+        Your widget is configured. AI answers depend on hosted service availability.
+      } @else {
+        Connect your store, sync your products, try Miyya privately, then switch it on for shoppers.
+        It all happens here in WordPress.
+      }
+    </p>
+  </header>
+
+  @if (phase() === 'connected' && !isLive()) {
+    <div class="mt-4 rounded-xl border border-slate-200 p-4 text-sm dark:border-slate-700">
+      <p>AI answers require an active Miyya service account and available usage. You can configure the widget now and activate the service later.</p>
+      <button type="button" (click)="configureWidgetOnly()" [disabled]="isCheckingLaunch() || isLaunching()" data-testid="setup-widget-only" class="mt-3 font-semibold text-accent-600 underline">
+        Configure widget without activating AI service
+      </button>
+    </div>
+  }
+
+  @if (phase() === 'connected') {
+    <aside
+      data-testid="welcome-email-status"
+      role="status"
+      class="mt-4 rounded-xl border border-slate-200 p-4 text-sm dark:border-slate-700"
+    >
+      @if (store()?.portalInviteStatus === 'not_required') {
+        <p class="font-medium">Welcome email not needed</p>
+        <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+          Your existing portal account is ready to use.
+        </p>
+      } @else if (store()?.portalInviteStatus === 'smtp_accepted' || store()?.portalInviteSentAt) {
+        <p class="font-medium">Welcome email sent</p>
+        <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+          Sent to {{ store()?.merchantEmail }}. Check Spam if it is missing from your inbox.
+        </p>
+      } @else {
+        <p class="font-medium">Welcome email pending</p>
+        <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+          The welcome email has not been confirmed as sent yet.
+        </p>
+      }
+    </aside>
+  }
+
+  <nav aria-label="Setup progress" class="mt-6">
+    <div
+      class="mb-4 flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400"
+    >
+      <span data-testid="setup-progress">{{ doneCount() }} of {{ steps().length }} complete</span>
+      @if (override() !== null) {
+        <button
+          type="button"
+          (click)="goToCurrent()"
+          class="font-semibold text-accent-600 underline decoration-dotted hover:text-accent-700 dark:text-accent-300"
+        >
+          Back to current step
+        </button>
+      }
+    </div>
+
+    <div class="overflow-x-auto pb-2">
+      <ol class="relative grid min-w-[720px] grid-cols-6 gap-0 px-1">
+        <div
+          aria-hidden="true"
+          class="absolute left-[8.33%] right-[8.33%] top-5 h-px bg-slate-200 dark:bg-slate-700"
+        ></div>
+        @for (step of steps(); track step.id; let index = $index) {
+          <li class="relative z-10 flex justify-center">
+            <button
+              type="button"
+              [attr.data-testid]="'setup-step-' + step.id"
+              [attr.aria-current]="step.id === viewStepId() ? 'step' : null"
+              [disabled]="!step.done && !step.current"
+              (click)="openStep(step)"
+              class="group flex w-full flex-col items-center rounded-xl px-2 pb-2 text-center outline-hidden transition focus-visible:ring-2 focus-visible:ring-accent-300 disabled:cursor-default"
+            >
+              <span
+                class="flex h-10 w-10 items-center justify-center rounded-full border text-sm font-bold shadow-sm transition"
+                [class]="
+                  step.done
+                    ? 'border-emerald-500 bg-emerald-500 text-white'
+                    : step.current
+                      ? 'border-accent-500 bg-accent-500 text-white ring-4 ring-accent-100 dark:ring-accent-500/20'
+                      : 'border-slate-200 bg-slate-100 text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400'
+                "
+              >
+                @if (step.done) {
+                  <svg lucideCheck class="h-4 w-4"></svg>
+                } @else {
+                  {{ index + 1 }}
+                }
+              </span>
+              <span class="mt-2 min-w-0">
+                <span
+                  class="block text-sm font-semibold leading-tight"
+                  [class]="
+                    step.current
+                      ? 'text-accent-600 dark:text-accent-300'
+                      : step.done
+                        ? 'text-slate-800 dark:text-slate-100'
+                        : 'text-slate-400 dark:text-slate-500'
+                  "
+                  >{{ step.title }}</span
+                >
+                <span class="mt-1 block text-xs leading-snug text-slate-500 dark:text-slate-400">{{
+                  step.summary
+                }}</span>
+              </span>
+            </button>
+          </li>
+        }
+      </ol>
+    </div>
+  </nav>
+
+  <section
+    class="aa-rise mt-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7 dark:border-slate-800 dark:bg-slate-900"
+    [attr.data-testid]="'setup-panel-' + viewStepId()"
+  >
+    @if (!loaded()) {
+      <div class="space-y-3" aria-hidden="true">
+        <div class="aa-skeleton h-6 w-56 rounded"></div>
+        <div class="aa-skeleton h-4 w-full max-w-md rounded"></div>
+        <div class="aa-skeleton mt-4 h-11 w-44 rounded-xl"></div>
+      </div>
+    } @else {
+      @if (automaticError(); as message) {
+        <div
+          role="alert"
+          class="mb-5 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200"
+        >
+          <p>{{ message }}</p>
+          <button
+            type="button"
+            (click)="retryAutomaticSetup()"
+            data-testid="setup-retry-automatic"
+            class="mt-2 font-semibold underline underline-offset-2"
+          >
+            Retry automatic setup
+          </button>
+        </div>
+      }
+      @if (automaticStep() === viewStepId()) {
+        <div
+          class="mb-5 flex items-center gap-2 rounded-xl border border-accent-100 bg-accent-50 px-3 py-2.5 text-sm font-medium text-accent-800 dark:border-accent-500/20 dark:bg-accent-500/10 dark:text-accent-200"
+          data-testid="setup-automatic-progress"
+          aria-live="polite"
+        >
+          <svg lucideLoaderCircle class="h-4 w-4 shrink-0 animate-spin"></svg>
+          Miyya is completing this step automatically…
+        </div>
+      }
+      @switch (viewStepId()) {
+        @case ('connect') {
+          @switch (phase()) {
+            @case ('connected') {
+              <div class="flex items-start gap-3">
+                <span
+                  class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400"
+                >
+                  <svg lucideCheck class="h-5 w-5"></svg>
+                </span>
+                <div>
+                  <h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">
+                    Store connected
+                  </h2>
+                  <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                    {{ storeHost() }} is linked to your Miyya account with read-only access.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                (click)="goToCurrent()"
+                data-testid="setup-continue"
+                class="mt-6 inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-accent-500 px-5 text-sm font-semibold text-white outline-hidden transition hover:bg-accent-600 hover:text-white focus-visible:ring-2 focus-visible:ring-accent-300"
+              >
+                Continue
+                <svg lucideArrowRight class="h-4 w-4"></svg>
+              </button>
+            }
+            @case ('pending') {
+              <div class="flex items-start gap-3" data-testid="setup-connect-pending">
+                <svg
+                  lucideLoaderCircle
+                  class="mt-1 h-6 w-6 shrink-0 animate-spin text-accent-500"
+                ></svg>
+                <div>
+                  <h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">
+                    Verifying your store and linking your Miyya account…
+                  </h2>
+                  <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                    This usually takes a few seconds. You can leave this page open.
+                  </p>
+                </div>
+              </div>
+            }
+            @default {
+              <div class="flex items-start gap-3">
+                <span
+                  class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent-50 text-accent-600 dark:bg-accent-500/10 dark:text-accent-300"
+                >
+                  <svg lucideStore class="h-5 w-5"></svg>
+                </span>
+                <div>
+                  <h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">
+                    @if (connectIsRetry()) {
+                      The connection wasn't completed
+                    } @else {
+                      Connect your store
+                    }
+                  </h2>
+                  <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                    @if (connectIsRetry()) {
+                      WooCommerce didn't confirm the connection. Try again; if WooCommerce asks you
+                      to approve, choose <strong>Approve</strong>.
+                    } @else {
+                      You'll allow read-only access in the next step. It's approved for you, and you
+                      come straight back here.
+                    }
+                  </p>
+                </div>
+              </div>
+
+              <div class="mt-5 rounded-xl bg-slate-50 p-4 dark:bg-slate-800/60">
+                <p
+                  class="flex items-center gap-2 text-xs font-semibold tracking-wide text-slate-500 uppercase dark:text-slate-400"
+                >
+                  <svg lucideShieldCheck class="h-4 w-4"></svg>
+                  What you're allowing
+                </p>
+                <ul class="mt-2 space-y-1.5 text-sm text-slate-600 dark:text-slate-300">
+                  <li class="flex items-start gap-2">
+                    <svg lucideCheck class="mt-0.5 h-4 w-4 shrink-0 text-emerald-500"></svg>Read
+                    your products, categories and prices
+                  </li>
+                  <li class="flex items-start gap-2">
+                    <svg lucideCheck class="mt-0.5 h-4 w-4 shrink-0 text-emerald-500"></svg
+                    >Read-only: nothing in your store is ever changed
+                  </li>
+                  <li class="flex items-start gap-2">
+                    <svg lucideCheck class="mt-0.5 h-4 w-4 shrink-0 text-emerald-500"></svg>No API
+                    keys to copy; WooCommerce passes them securely
+                  </li>
+                </ul>
+              </div>
+
+              <div
+                data-testid="setup-data-safety"
+                class="mt-4 flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 dark:border-emerald-500/25 dark:bg-emerald-500/10"
+              >
+                <span
+                  class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300"
+                >
+                  <svg lucideShieldCheck class="h-4 w-4"></svg>
+                </span>
+                <div>
+                  <p class="text-sm font-semibold text-emerald-900 dark:text-emerald-100">
+                    How your data is used
+                  </p>
+                  <p class="mt-0.5 text-xs leading-5 text-emerald-800/85 dark:text-emerald-200/85">
+                    We use secure read-only access to fetch your products. Miyya sends product text and relevant chat context to OpenAI for AI processing.
+                  </p>
+                </div>
+              </div>
+
+              @if (connectError() && !showConnectionChoice()) {
+                <p
+                  role="alert"
+                  class="mt-4 flex items-start gap-2 rounded-lg bg-rose-50 p-3 text-sm text-rose-700 dark:bg-rose-500/10 dark:text-rose-300"
+                >
+                  <svg lucideTriangleAlert class="mt-0.5 h-4 w-4 shrink-0"></svg
+                  >{{ connectError() }}
+                </p>
+              }
+
+              <button
+                type="button"
+                (click)="openConnectionChoice()"
+                [disabled]="isConnecting()"
+                data-testid="setup-connect"
+                class="mt-6 inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-accent-500 px-5 text-sm font-semibold text-white outline-hidden transition hover:bg-accent-600 hover:text-white focus-visible:ring-2 focus-visible:ring-accent-300 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                @if (isConnecting() && !showConnectionChoice()) {
+                  <svg lucideLoaderCircle class="h-4 w-4 animate-spin"></svg>
+                  Opening WooCommerce…
+                } @else {
+                  {{ connectIsRetry() ? 'Retry connection' : 'Connect my store' }}
+                  <svg lucideArrowRight class="h-4 w-4"></svg>
+                }
+              </button>
+            }
+          }
+        }
+        @case ('catalog') {
+          <div class="flex items-start gap-3">
+            <span
+              class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent-50 text-accent-600 dark:bg-accent-500/10 dark:text-accent-300"
+            >
+              <svg lucidePackage class="h-5 w-5"></svg>
+            </span>
+            <div>
+              <h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">
+                Sync your product catalog
+              </h2>
+              <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                Miyya reads your products so it can answer questions about them. This is read-only
+                and runs in the background.
+              </p>
+            </div>
+          </div>
+
+          @if (catalogError(); as message) {
+            <p
+              role="alert"
+              class="mt-4 flex items-start gap-2 rounded-lg bg-rose-50 p-3 text-sm text-rose-700 dark:bg-rose-500/10 dark:text-rose-300"
+            >
+              <svg lucideTriangleAlert class="mt-0.5 h-4 w-4 shrink-0"></svg>{{ message }}
+            </p>
+          }
+          @switch (catalogReadiness().state) {
+            @case ('idle') {
+              <p class="mt-5 text-sm text-slate-600 dark:text-slate-300">
+                @if (isStartingSync()) {
+                  Starting the import…
+                } @else {
+                  Your catalog hasn't been imported yet.
+                }
+              </p>
+              <button
+                type="button"
+                (click)="startSync()"
+                [disabled]="isStartingSync()"
+                data-testid="setup-start-sync"
+                class="mt-4 inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-accent-500 px-5 text-sm font-semibold text-white outline-hidden transition hover:bg-accent-600 hover:text-white focus-visible:ring-2 focus-visible:ring-accent-300 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                @if (isStartingSync()) {
+                  <svg lucideLoaderCircle class="h-4 w-4 animate-spin"></svg>
+                } @else {
+                  <svg lucideRefreshCw class="h-4 w-4"></svg>
+                }
+                Start catalog sync
+              </button>
+            }
+            @case ('syncing') {
+              @let progress = catalogReadiness();
+              @if (progress.state === 'syncing') {
+                @let overall = displayedCatalogProgress() ?? 0;
+                <div
+                  class="mt-5 rounded-xl border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-700 dark:bg-slate-800/50"
+                  data-testid="setup-syncing"
+                  aria-live="polite"
+                >
+                  <div class="flex items-start justify-between gap-4">
+                    <div>
+                      <p
+                        class="flex items-center gap-2 text-sm font-semibold text-slate-800 dark:text-slate-100"
+                      >
+                        <svg lucideLoaderCircle class="h-4 w-4 animate-spin text-accent-500"></svg>
+                        {{
+                          progress.stage === 'import'
+                            ? 'Importing your catalog'
+                            : 'Making your catalog
+            searchable'
+                        }}
+                      </p>
+                      <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                        @if (progress.stage === 'import') {
+                          We are securely reading products, categories and variations from your
+                          store.
+                        } @else {
+                          Your products are imported. Miyya is preparing them for AI search now.
+                        }
+                      </p>
+                    </div>
+                    <span
+                      class="shrink-0 text-sm font-semibold tabular-nums text-slate-700 dark:text-slate-200"
+                      >{{ overall }}%</span
+                    >
+                  </div>
+                  <div
+                    class="mt-4 h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700"
+                    role="progressbar"
+                    [attr.aria-valuenow]="overall"
+                    aria-valuemin="0"
+                    aria-valuemax="100"
+                    aria-label="Catalog preparation progress"
+                  >
+                    <div
+                      class="h-full rounded-full bg-accent-500 transition-all duration-500"
+                      [style.width.%]="overall"
+                    ></div>
+                  </div>
+                  <div class="mt-4 grid gap-2 text-xs sm:grid-cols-2">
+                    <div
+                      class="flex items-center gap-2 dark:text-slate-200"
+                      [class.text-emerald-700]="progress.stage === 'index'"
+                      [class.text-slate-700]="progress.stage === 'import'"
+                    >
+                      @if (progress.stage === 'index') {
+                        <svg lucideCheck class="h-4 w-4 shrink-0"></svg>
+                      } @else {
+                        <span
+                          class="h-2 w-2 shrink-0 rounded-full bg-accent-500 animate-pulse"
+                        ></span>
+                      }
+                      <span class="font-medium">1. Import products</span>
+                    </div>
+                    <div
+                      class="flex items-center gap-2 dark:text-slate-400"
+                      [class.text-slate-700]="progress.stage === 'index'"
+                      [class.text-slate-400]="progress.stage === 'import'"
+                    >
+                      @if (progress.stage === 'index') {
+                        <span
+                          class="h-2 w-2 shrink-0 rounded-full bg-accent-500 animate-pulse"
+                        ></span>
+                      } @else {
+                        <span
+                          class="h-2 w-2 shrink-0 rounded-full bg-slate-300 dark:bg-slate-600"
+                        ></span>
+                      }
+                      <span class="font-medium">2. Prepare AI search</span>
+                    </div>
+                  </div>
+                  <p class="mt-3 text-xs text-slate-500 dark:text-slate-400">
+                    @if (progress.total !== null) {
+                      {{ progress.processed }} of {{ progress.total }} products ·
+                    }
+                    This continues in the background. You can safely leave this page.
+                  </p>
+                </div>
+              }
+            }
+            @case ('failed') {
+              @let failure = catalogReadiness();
+              @if (failure.state === 'failed') {
+                <div
+                  class="mt-5 rounded-xl border border-rose-200 bg-rose-50 p-4 dark:border-rose-500/25 dark:bg-rose-500/10"
+                  data-testid="setup-catalog-failed"
+                >
+                  <p
+                    class="flex items-start gap-2 text-sm font-semibold text-rose-800 dark:text-rose-200"
+                  >
+                    <svg lucideTriangleAlert class="mt-0.5 h-4 w-4 shrink-0"></svg>
+                    {{
+                      failure.stage === 'import'
+                        ? 'The product import did not finish'
+                        : 'AI search indexing
+        did not finish'
+                    }}
+                  </p>
+                  <p class="mt-1 text-sm text-rose-700 dark:text-rose-300">{{ failure.message }}</p>
+                </div>
+                <div class="mt-4 flex flex-wrap gap-3">
+                  @if (failure.stage === 'import') {
+                    <button
+                      type="button"
+                      (click)="startSync()"
+                      [disabled]="isStartingSync()"
+                      class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-accent-500 px-5 text-sm font-semibold text-white outline-hidden transition hover:bg-accent-600 hover:text-white focus-visible:ring-2 focus-visible:ring-accent-300 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      <svg lucideRefreshCw class="h-4 w-4"></svg>
+                      Retry catalog sync
+                    </button>
+                  } @else {
+                    <button
+                      type="button"
+                      (click)="reindex()"
+                      [disabled]="isReindexing()"
+                      class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-accent-500 px-5 text-sm font-semibold text-white outline-hidden transition hover:bg-accent-600 hover:text-white focus-visible:ring-2 focus-visible:ring-accent-300 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      <svg lucideRefreshCw class="h-4 w-4"></svg>
+                      Retry indexing
+                    </button>
+                    @if (store()?.catalogStatus) {
+                      <button
+                        type="button"
+                        (click)="acceptCatalog()"
+                        data-testid="setup-accept-catalog"
+                        class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-white px-5 text-sm font-semibold text-slate-700 ring-1 ring-slate-300 ring-inset transition hover:bg-slate-50 dark:bg-slate-800 dark:text-slate-200 dark:ring-slate-600 dark:hover:bg-slate-700"
+                      >
+                        Continue to free trial
+                      </button>
+                    }
+                  }
+                </div>
+              }
+            }
+            @case ('empty') {
+              <div
+                class="mt-5 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-500/25 dark:bg-amber-500/10 dark:text-amber-200"
+                data-testid="setup-catalog-empty"
+              >
+                Your store has no published products yet. Add at least one product in WooCommerce,
+                then sync again.
+              </div>
+              <button
+                type="button"
+                (click)="startSync()"
+                [disabled]="isStartingSync()"
+                class="mt-4 inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-accent-500 px-5 text-sm font-semibold text-white outline-hidden transition hover:bg-accent-600 hover:text-white focus-visible:ring-2 focus-visible:ring-accent-300 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <svg lucideRefreshCw class="h-4 w-4"></svg>
+                Sync again
+              </button>
+            }
+            @case ('partial') {
+              @let partial = catalogReadiness();
+              @if (partial.state === 'partial') {
+                <div
+                  class="mt-5 rounded-xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-500/25 dark:bg-amber-500/10"
+                  data-testid="setup-catalog-partial"
+                >
+                  <p
+                    class="flex items-start gap-2 text-sm font-semibold text-amber-900 dark:text-amber-200"
+                  >
+                    <svg lucideTriangleAlert class="mt-0.5 h-4 w-4 shrink-0"></svg>
+                    {{ partial.usable }}
+                    {{ partial.usable === 1 ? 'product is' : 'products are' }} ready;
+                    {{ partial.failed }} couldn't be imported
+                  </p>
+                  @if (shownErrors().length) {
+                    <ul class="mt-3 space-y-1.5 text-sm text-amber-800 dark:text-amber-200/90">
+                      @for (item of shownErrors(); track item.id) {
+                        <li class="flex flex-wrap gap-x-2">
+                          <span class="font-medium">{{
+                            item.sourceProductId
+                              ? 'Product #' + item.sourceProductId
+                              : 'Unknown product'
+                          }}</span>
+                          <span class="text-amber-700 dark:text-amber-300/80">{{
+                            item.errorMessage || 'Import failed'
+                          }}</span>
+                        </li>
+                      }
+                    </ul>
+                    @if (failedErrors().length > shownErrors().length) {
+                      <p class="mt-2 text-xs text-amber-700 dark:text-amber-300/80">
+                        and {{ failedErrors().length - shownErrors().length }} more
+                      </p>
+                    }
+                  }
+                </div>
+                <div class="mt-4 flex flex-wrap gap-3">
+                  <button
+                    type="button"
+                    (click)="retryFailedProducts()"
+                    [disabled]="isRetryingFailed()"
+                    data-testid="setup-retry-failed"
+                    class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-accent-500 px-5 text-sm font-semibold text-white outline-hidden transition hover:bg-accent-600 hover:text-white focus-visible:ring-2 focus-visible:ring-accent-300 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    @if (isRetryingFailed()) {
+                      <svg lucideLoaderCircle class="h-4 w-4 animate-spin"></svg>
+                    } @else {
+                      <svg lucideRefreshCw class="h-4 w-4"></svg>
+                    }
+                    Retry failed products
+                  </button>
+                  <button
+                    type="button"
+                    (click)="checkCatalogAgain()"
+                    class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-white px-5 text-sm font-semibold text-slate-700 ring-1 ring-slate-300 ring-inset transition hover:bg-slate-50 dark:bg-slate-800 dark:text-slate-200 dark:ring-slate-600 dark:hover:bg-slate-700"
+                  >
+                    Check usable products
+                  </button>
+                  @if (partial.usable > 0) {
+                    <button
+                      type="button"
+                      (click)="acceptCatalog()"
+                      data-testid="setup-accept-catalog"
+                      class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-white px-5 text-sm font-semibold text-accent-700 ring-1 ring-accent-300 ring-inset transition hover:bg-accent-50 dark:bg-slate-800 dark:text-accent-300 dark:ring-accent-500/40 dark:hover:bg-slate-700"
+                    >
+                      Continue with {{ partial.usable }} usable
+                      {{ partial.usable === 1 ? 'product' : 'products' }}
+                      <svg lucideArrowRight class="h-4 w-4"></svg>
+                    </button>
+                  }
+                </div>
+              }
+            }
+            @case ('ready') {
+              @let ready = catalogReadiness();
+              @if (ready.state === 'ready') {
+                <div
+                  class="mt-5 flex items-start gap-3 rounded-xl bg-emerald-50 p-4 dark:bg-emerald-500/10"
+                  data-testid="setup-catalog-ready"
+                >
+                  <svg
+                    lucideCheck
+                    class="mt-0.5 h-5 w-5 shrink-0 text-emerald-600 dark:text-emerald-400"
+                  ></svg>
+                  <p class="text-sm font-medium text-emerald-800 dark:text-emerald-200">
+                    {{ ready.products }}
+                    {{ ready.products === 1 ? 'product is' : 'products are' }} synced and
+                    searchable.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  (click)="goToCurrent()"
+                  data-testid="setup-continue"
+                  class="mt-5 inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-accent-500 px-5 text-sm font-semibold text-white outline-hidden transition hover:bg-accent-600 hover:text-white focus-visible:ring-2 focus-visible:ring-accent-300"
+                >
+                  Continue
+                  <svg lucideArrowRight class="h-4 w-4"></svg>
+                </button>
+              }
+            }
+          }
+        }
+        @case ('trial') {
+          <div class="flex items-start gap-3">
+            <span
+              class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent-50 text-accent-600 dark:bg-accent-500/10 dark:text-accent-300"
+            >
+              <svg lucideCreditCard class="h-5 w-5"></svg>
+            </span>
+            <div>
+              <h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">
+                {{
+                  trialPhase() === 'approval_required' || trialPhase() === 'approval_rejected'
+                    ? 'Account approval needed'
+                    : 'Activate your free trial'
+                }}
+              </h2>
+              <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                @if (trialPhase() === 'approval_required' || trialPhase() === 'approval_rejected') {
+                  Your store is connected. Account approval is needed before the trial can start.
+                } @else {
+                  The trial switches Miyya on for this store. No card is needed to start.
+                }
+              </p>
+            </div>
+          </div>
+
+          @if (catalogReadiness().state === 'ready') {
+            <p class="mt-4 flex items-center gap-2 text-sm text-emerald-700 dark:text-emerald-300">
+              <svg lucideCheck class="h-4 w-4"></svg>
+              Catalog ready: your products are searchable.
+            </p>
+          }
+          @if (trialError(); as message) {
+            <p
+              role="alert"
+              class="mt-4 flex items-start gap-2 rounded-lg bg-rose-50 p-3 text-sm text-rose-700 dark:bg-rose-500/10 dark:text-rose-300"
+              data-testid="setup-trial-error"
+            >
+              <svg lucideTriangleAlert class="mt-0.5 h-4 w-4 shrink-0"></svg>{{ message }}
+            </p>
+          }
+          @if (trialNote(); as note) {
+            <p
+              class="mt-4 rounded-lg bg-sky-50 p-3 text-sm text-sky-800 dark:bg-sky-500/10 dark:text-sky-200"
+            >
+              {{ note }}
+            </p>
+          }
+          @switch (trialPhase()) {
+            @case ('approval_required') {
+              <div
+                data-testid="setup-owner-approval"
+                role="status"
+                class="mt-5 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200"
+              >
+                <p class="font-semibold">Waiting for the account owner to approve this store</p>
+                <p class="mt-2">
+                  {{ storeHost() }} is a separate store joining an existing Miyya account. Using the
+                  same email does not automatically approve a new domain.
+                </p>
+                <p class="mt-2">
+                  Sign in to the Miyya portal with the account-owner email, open Stores, and approve
+                  this store.
+                </p>
+                <p class="mt-2">
+                  @if (automaticSetup() && subscription.status()?.storeLinkStatus === 'pending') {
+                    Miyya will continue setup here once approval is confirmed.
+                  } @else if (automaticSetup()) {
+                    After approval, choose Check approval status to continue Automatic setup.
+                  } @else {
+                    Return here after approval to activate this store’s trial.
+                  }
+                </p>
+              </div>
+              <div class="mt-4 flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  (click)="openStoreApprovals($event)"
+                  [disabled]="isOpeningBillingPortal()"
+                  data-testid="setup-open-approvals"
+                  class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-accent-500 px-5 text-sm font-semibold text-white disabled:opacity-60"
+                >
+                  {{ isOpeningBillingPortal() ? 'Opening portal…' : 'Open Stores in Miyya portal' }}
+                  <svg lucideExternalLink class="h-4 w-4"></svg>
+                </button>
+                <button
+                  type="button"
+                  (click)="checkPlanAgain()"
+                  data-testid="setup-check-approval"
+                  class="inline-flex h-11 items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold text-accent-700 ring-1 ring-slate-200 dark:text-accent-300 dark:ring-slate-700"
+                >
+                  Check approval status
+                </button>
+              </div>
+              @if (billingPortalError(); as message) {
+                <p role="alert" class="mt-3 text-sm text-rose-600 dark:text-rose-300">
+                  {{ message }}
+                </p>
+              }
+            }
+            @case ('approval_rejected') {
+              <p class="mt-5 text-sm text-amber-800 dark:text-amber-200">
+                The account owner declined this store’s request to join their Miyya account. Contact
+                the owner before continuing setup.
+              </p>
+              <button
+                type="button"
+                (click)="checkPlanAgain()"
+                class="mt-4 text-sm font-semibold text-accent-700 underline dark:text-accent-300"
+              >
+                Check approval status
+              </button>
+            }
+            @case ('loading') {
+              <div class="mt-5 space-y-3" aria-hidden="true">
+                <div class="aa-skeleton h-4 w-64 rounded"></div>
+                <div class="aa-skeleton h-11 w-44 rounded-xl"></div>
+              </div>
+            }
+            @case ('unknown') {
+              <p class="mt-5 text-sm text-slate-600 dark:text-slate-300">
+                We couldn't check your plan just now.
+              </p>
+              <button
+                type="button"
+                (click)="checkPlanAgain()"
+                class="mt-4 inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-accent-500 px-5 text-sm font-semibold text-white outline-hidden transition hover:bg-accent-600 hover:text-white focus-visible:ring-2 focus-visible:ring-accent-300"
+              >
+                <svg lucideRefreshCw class="h-4 w-4"></svg>
+                Check again
+              </button>
+            }
+            @case ('available') {
+              <ul class="mt-5 space-y-1.5 text-sm text-slate-600 dark:text-slate-300">
+                <li class="flex items-start gap-2">
+                  <svg lucideCheck class="mt-0.5 h-4 w-4 shrink-0 text-emerald-500"></svg>Full Miyya
+                  access for your store
+                </li>
+                <li class="flex items-start gap-2">
+                  <svg lucideCheck class="mt-0.5 h-4 w-4 shrink-0 text-emerald-500"></svg>Trial
+                  credits included, no card required
+                </li>
+                <li class="flex items-start gap-2">
+                  <svg lucideCheck class="mt-0.5 h-4 w-4 shrink-0 text-emerald-500"></svg>Starts
+                  immediately; you decide when shoppers see it
+                </li>
+              </ul>
+              <div class="mt-5 flex flex-wrap items-center gap-3">
+                <button
+                  type="button"
+                  (click)="activateTrial()"
+                  [disabled]="isActivatingTrial()"
+                  data-testid="setup-activate-trial"
+                  class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-accent-500 px-5 text-sm font-semibold text-white outline-hidden transition hover:bg-accent-600 hover:text-white focus-visible:ring-2 focus-visible:ring-accent-300 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  @if (isActivatingTrial()) {
+                    <svg lucideLoaderCircle class="h-4 w-4 animate-spin"></svg>
+                    Activating…
+                  } @else {
+                    Activate free trial
+                    <svg lucideArrowRight class="h-4 w-4"></svg>
+                  }
+                </button>
+                @if (usageSummary(); as usage) {
+                  <a
+                    [href]="usage.manageUrl"
+                    target="_blank"
+                    rel="noopener"
+                    class="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
+                  >
+                    Or purchase Miyya
+                    <svg lucideExternalLink class="h-3.5 w-3.5"></svg>
+                  </a>
+                }
+              </div>
+            }
+            @case ('waitlisted') {
+              <div
+                class="mt-5 flex items-start gap-3 rounded-xl bg-sky-50 p-4 dark:bg-sky-500/10"
+                data-testid="setup-trial-waitlisted"
+              >
+                <svg
+                  lucideLoaderCircle
+                  class="mt-0.5 h-5 w-5 shrink-0 animate-spin text-sky-600 dark:text-sky-300"
+                ></svg>
+                <p class="text-sm text-sky-900 dark:text-sky-100">
+                  You're on the waitlist. Trial capacity is full right now, and your trial starts
+                  automatically as soon as it opens. This page checks for you.
+                </p>
+              </div>
+            }
+            @case ('expired') {
+              <p class="mt-5 text-sm text-slate-600 dark:text-slate-300">
+                Your free trial has ended. Purchase Miyya to keep the assistant answering. Your
+                catalog and settings are kept.
+              </p>
+              @if (usageSummary(); as usage) {
+                <a
+                  [href]="usage.manageUrl"
+                  target="_blank"
+                  rel="noopener"
+                  class="mt-4 inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-accent-500 px-5 text-sm font-semibold text-white outline-hidden transition hover:bg-accent-600 hover:text-white focus-visible:ring-2 focus-visible:ring-accent-300"
+                >
+                  Purchase Miyya
+                  <svg lucideExternalLink class="h-4 w-4"></svg>
+                </a>
+              }
+            }
+            @case ('frozen') {
+              <p class="mt-5 text-sm text-slate-600 dark:text-slate-300">
+                This account is paused while support reviews it. Contact support from the billing
+                page.
+              </p>
+              @if (usageSummary(); as usage) {
+                <a
+                  [href]="usage.manageUrl"
+                  target="_blank"
+                  rel="noopener"
+                  class="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-accent-600 hover:text-accent-700 dark:text-accent-300"
+                >
+                  Open billing
+                  <svg lucideExternalLink class="h-3.5 w-3.5"></svg>
+                </a>
+              }
+            }
+            @default {
+              <div
+                class="mt-5 flex items-start gap-3 rounded-xl bg-emerald-50 p-4 dark:bg-emerald-500/10"
+                data-testid="setup-trial-active"
+              >
+                <svg
+                  lucideCheck
+                  class="mt-0.5 h-5 w-5 shrink-0 text-emerald-600 dark:text-emerald-400"
+                ></svg>
+                <p class="text-sm font-medium text-emerald-800 dark:text-emerald-200">
+                  @if (trialPhase() === 'not_required') {
+                    Nothing to activate: billing isn't enabled on this account yet.
+                  } @else if (usageSummary()?.trialDays; as days) {
+                    Your free trial is active, with {{ days }}
+                    {{ days === 1 ? 'day' : 'days' }} left.
+                  } @else {
+                    Your plan is active. Miyya can answer shoppers.
+                  }
+                </p>
+              </div>
+              <button
+                type="button"
+                (click)="goToCurrent()"
+                data-testid="setup-continue"
+                class="mt-5 inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-accent-500 px-5 text-sm font-semibold text-white outline-hidden transition hover:bg-accent-600 hover:text-white focus-visible:ring-2 focus-visible:ring-accent-300"
+              >
+                Continue
+                <svg lucideArrowRight class="h-4 w-4"></svg>
+              </button>
+            }
+          }
+        }
+        @case ('preview') {
+          <div class="flex items-start gap-3">
+            <span
+              class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent-50 text-accent-600 dark:bg-accent-500/10 dark:text-accent-300"
+            >
+              <svg lucideMessageSquare class="h-5 w-5"></svg>
+            </span>
+            <div>
+              <h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">
+                Try the AI chat privately
+              </h2>
+              <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                Only you can see this chat, here in WordPress. Shoppers see nothing until you go
+                live.
+              </p>
+            </div>
+          </div>
+
+          @if (setupState()?.chatVerifiedAt) {
+            <div
+              class="mt-5 flex items-start gap-3 rounded-xl bg-emerald-50 p-4 dark:bg-emerald-500/10"
+              data-testid="setup-chat-verified"
+            >
+              <svg
+                lucideCheck
+                class="mt-0.5 h-5 w-5 shrink-0 text-emerald-600 dark:text-emerald-400"
+              ></svg>
+              <p class="text-sm font-medium text-emerald-800 dark:text-emerald-200">
+                You confirmed the chat answers correctly.
+              </p>
+            </div>
+            <div class="mt-5 flex flex-wrap gap-3">
+              <button
+                type="button"
+                (click)="goToCurrent()"
+                data-testid="setup-continue"
+                class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-accent-500 px-5 text-sm font-semibold text-white outline-hidden transition hover:bg-accent-600 hover:text-white focus-visible:ring-2 focus-visible:ring-accent-300"
+              >
+                Continue
+                <svg lucideArrowRight class="h-4 w-4"></svg>
+              </button>
+              <button
+                type="button"
+                (click)="openPreview()"
+                class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-white px-5 text-sm font-semibold text-slate-700 ring-1 ring-slate-300 ring-inset transition hover:bg-slate-50 dark:bg-slate-800 dark:text-slate-200 dark:ring-slate-600 dark:hover:bg-slate-700"
+              >
+                Open the chat again
+              </button>
+            </div>
+          } @else {
+            <button
+              type="button"
+              (click)="openPreview()"
+              data-testid="setup-open-preview"
+              class="mt-5 inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-accent-500 px-5 text-sm font-semibold text-white outline-hidden transition hover:bg-accent-600 hover:text-white focus-visible:ring-2 focus-visible:ring-accent-300"
+            >
+              <svg lucideMessageSquare class="h-4 w-4"></svg>
+              {{ chatOpen() ? 'Chat is open' : 'Open private AI chat' }}
+            </button>
+
+            <div class="mt-5">
+              <p
+                class="text-xs font-semibold tracking-wide text-slate-500 uppercase dark:text-slate-400"
+              >
+                Try asking
+              </p>
+              <ul class="mt-2 flex flex-wrap gap-2">
+                @for (prompt of previewPrompts; track prompt) {
+                  <li
+                    class="rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300"
+                  >
+                    {{ prompt }}
+                  </li>
+                }
+              </ul>
+            </div>
+
+            @if (previewOpened()) {
+              <div
+                class="mt-6 rounded-xl border border-slate-200 p-4 dark:border-slate-700"
+                data-testid="setup-chat-question"
+              >
+                <p class="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                  Is the AI chat working correctly?
+                </p>
+                <p class="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                  Does it answer with products from your store, with the right names and prices?
+                </p>
+                <div class="mt-3 flex flex-wrap gap-3">
+                  <button
+                    type="button"
+                    (click)="confirmChat(true)"
+                    [disabled]="isSavingChat()"
+                    data-testid="setup-chat-yes"
+                    class="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 text-sm font-semibold text-white outline-hidden transition hover:bg-emerald-700 hover:text-white focus-visible:ring-2 focus-visible:ring-emerald-300 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    <svg lucideCheck class="h-4 w-4"></svg>
+                    Yes, it works
+                  </button>
+                  <button
+                    type="button"
+                    (click)="confirmChat(false)"
+                    [disabled]="isSavingChat()"
+                    data-testid="setup-chat-no"
+                    class="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-white px-4 text-sm font-semibold text-slate-700 ring-1 ring-slate-300 ring-inset transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-slate-800 dark:text-slate-200 dark:ring-slate-600 dark:hover:bg-slate-700"
+                  >
+                    No, something's wrong
+                  </button>
+                </div>
+                @if (previewError(); as message) {
+                  <p role="alert" class="mt-3 text-sm text-rose-600 dark:text-rose-300">
+                    {{ message }}
+                  </p>
+                }
+              </div>
+            }
+            @if (showTroubleshooting()) {
+              <div
+                class="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-500/25 dark:bg-amber-500/10"
+                data-testid="setup-troubleshooting"
+              >
+                <p class="text-sm font-semibold text-amber-900 dark:text-amber-200">
+                  Let's check your catalog
+                </p>
+                <p class="mt-1 text-sm text-amber-800 dark:text-amber-200/90">
+                  @if (counts(); as c) {
+                    {{ c.productsSynced }}
+                    {{ c.productsSynced === 1 ? 'product is' : 'products are' }} synced and
+                    {{ c.productsIndexed }} indexed for AI search.
+                  } @else {
+                    We couldn't read your catalog counts.
+                  }
+                  Re-syncing or re-indexing fixes most wrong or missing answers.
+                </p>
+                <div class="mt-3 flex flex-wrap gap-3">
+                  <button
+                    type="button"
+                    (click)="startSync()"
+                    [disabled]="isStartingSync()"
+                    class="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-white px-4 text-sm font-semibold text-slate-700 ring-1 ring-slate-300 ring-inset transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-slate-800 dark:text-slate-200 dark:ring-slate-600"
+                  >
+                    <svg lucideRefreshCw class="h-4 w-4"></svg>
+                    Re-sync catalog
+                  </button>
+                  <button
+                    type="button"
+                    (click)="reindex()"
+                    [disabled]="isReindexing()"
+                    class="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-white px-4 text-sm font-semibold text-slate-700 ring-1 ring-slate-300 ring-inset transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-slate-800 dark:text-slate-200 dark:ring-slate-600"
+                  >
+                    <svg lucideRefreshCw class="h-4 w-4"></svg>
+                    Re-index AI search
+                  </button>
+                  <button
+                    type="button"
+                    (click)="testAgain()"
+                    data-testid="setup-test-again"
+                    class="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-accent-500 px-4 text-sm font-semibold text-white outline-hidden transition hover:bg-accent-600 hover:text-white focus-visible:ring-2 focus-visible:ring-accent-300"
+                  >
+                    Test again
+                  </button>
+                </div>
+                @if (catalogError(); as message) {
+                  <p role="alert" class="mt-3 text-sm text-rose-600 dark:text-rose-300">
+                    {{ message }}
+                  </p>
+                }
+              </div>
+            }
+          }
+        }
+        @case ('launch') {
+          <div class="flex items-start gap-3">
+            <span
+              class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent-50 text-accent-600 dark:bg-accent-500/10 dark:text-accent-300"
+            >
+              <svg lucideShieldCheck class="h-5 w-5"></svg>
+            </span>
+            <div>
+              <h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">
+                Launch readiness check
+              </h2>
+              <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                One last look at everything shoppers will depend on.
+              </p>
+            </div>
+          </div>
+
+          @if (launchCheckError(); as message) {
+            <p
+              role="alert"
+              class="mt-4 flex items-start gap-2 rounded-lg bg-rose-50 p-3 text-sm text-rose-700 dark:bg-rose-500/10 dark:text-rose-300"
+            >
+              <svg lucideTriangleAlert class="mt-0.5 h-4 w-4 shrink-0"></svg>{{ message }}
+            </p>
+          }
+          @if (launchCheck(); as result) {
+            <ul
+              class="mt-5 divide-y divide-slate-100 rounded-xl border border-slate-200 dark:divide-slate-800 dark:border-slate-800"
+              data-testid="setup-checks"
+            >
+              @for (check of result.checks; track check.id) {
+                <li
+                  class="flex items-start gap-3 p-3.5"
+                  [attr.data-testid]="'setup-check-' + check.id"
+                >
+                  <span
+                    class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-white"
+                    [class]="check.passed ? 'bg-emerald-500' : check.required === false ? 'bg-amber-500' : 'bg-rose-500'"
+                  >
+                    @if (check.passed) {
+                      <svg lucideCheck class="h-3 w-3"></svg>
+                    } @else {
+                      <span class="text-xs leading-none font-bold">!</span>
+                    }
+                  </span>
+                  <div class="min-w-0 flex-1">
+                    <p class="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                      {{ check.label }}
+                      @if (check.required === false) {
+                        <span class="text-xs font-normal text-slate-500">(optional for widget publication)</span>
+                      }
+                    </p>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">{{ check.detail }}</p>
+                    @if (!check.passed && check.fix) {
+                      <p class="mt-1 text-xs text-rose-700 dark:text-rose-300">{{ check.fix }}</p>
+                    }
+                  </div>
+                  @if (!check.passed && hasFixStep(check)) {
+                    <button
+                      type="button"
+                      (click)="fixStep(check)"
+                      class="shrink-0 text-xs font-semibold text-accent-600 underline decoration-dotted hover:text-accent-700 dark:text-accent-300"
+                    >
+                      Fix this
+                    </button>
+                  }
+                </li>
+              }
+            </ul>
+
+            <p class="mt-3 text-xs text-slate-500 dark:text-slate-400">
+              {{ passedChecks() }} of {{ result.checks.length }} checks passed
+            </p>
+
+            <div class="mt-4 flex flex-wrap gap-3">
+              @if (result.passed) {
+                <button
+                  type="button"
+                  (click)="continueToLaunch()"
+                  data-testid="setup-continue"
+                  class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-accent-500 px-5 text-sm font-semibold text-white outline-hidden transition hover:bg-accent-600 hover:text-white focus-visible:ring-2 focus-visible:ring-accent-300"
+                >
+                  Continue
+                  <svg lucideArrowRight class="h-4 w-4"></svg>
+                </button>
+              }
+              <button
+                type="button"
+                (click)="runLaunchCheck()"
+                [disabled]="isCheckingLaunch()"
+                data-testid="setup-recheck"
+                class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-white px-5 text-sm font-semibold text-slate-700 ring-1 ring-slate-300 ring-inset transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-slate-800 dark:text-slate-200 dark:ring-slate-600 dark:hover:bg-slate-700"
+              >
+                @if (isCheckingLaunch()) {
+                  <svg lucideLoaderCircle class="h-4 w-4 animate-spin"></svg>
+                } @else {
+                  <svg lucideRefreshCw class="h-4 w-4"></svg>
+                }
+                {{ result.passed ? 'Run check again' : 'Retry launch check' }}
+              </button>
+            </div>
+          } @else if (isCheckingLaunch()) {
+            <div class="mt-5 space-y-2" aria-hidden="true">
+              @for (row of [0, 1, 2, 3, 4, 5]; track row) {
+                <div class="aa-skeleton h-12 rounded-xl"></div>
+              }
+            </div>
+          } @else {
+            <button
+              type="button"
+              (click)="runLaunchCheck()"
+              class="mt-5 inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-accent-500 px-5 text-sm font-semibold text-white outline-hidden transition hover:bg-accent-600 hover:text-white focus-visible:ring-2 focus-visible:ring-accent-300"
+            >
+              Run launch check
+            </button>
+          }
+        }
+        @case ('live') {
+          @if (isLive()) {
+            <div class="flex items-start gap-3" data-testid="setup-live">
+              <span
+                class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400"
+              >
+                <svg lucideRocket class="h-6 w-6"></svg>
+              </span>
+              <div>
+                <h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">
+                  Miyya is live on your storefront
+                </h2>
+                <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                  Shoppers can now chat with Miyya on {{ storeHost() }}.
+                </p>
+              </div>
+            </div>
+
+            <div class="mt-6 grid gap-4 sm:grid-cols-2">
+              <div class="rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+                <p class="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                  Verify the public chat
+                </p>
+                <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                  Open your storefront in a private window, so you see what a shopper sees, and send
+                  a message.
+                </p>
+                <a
+                  [href]="storefrontUrl"
+                  target="_blank"
+                  rel="noopener"
+                  data-testid="setup-open-storefront"
+                  class="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-accent-600 hover:text-accent-700 dark:text-accent-300"
+                >
+                  Open my storefront
+                  <svg lucideExternalLink class="h-3.5 w-3.5"></svg>
+                </a>
+              </div>
+
+              <div class="rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+                <p class="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                  Monitor usage
+                </p>
+                @if (usageSummary(); as usage) {
+                  <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                    @if (!usage.enforced) {
+                      Billing isn't enabled on this account yet.
+                    } @else {
+                      @if (usage.trialDays !== null) {
+                        Trial: {{ usage.trialDays }}
+                        {{ usage.trialDays === 1 ? 'day' : 'days' }} left.
+                      }
+                      {{ usage.credits }} credits remaining.
+                    }
+                  </p>
+                  <a
+                    [href]="usage.manageUrl"
+                    target="_blank"
+                    rel="noopener"
+                    (click)="openBilling($event)"
+                    class="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-accent-600 hover:text-accent-700 dark:text-accent-300"
+                  >
+                    {{ isOpeningBillingPortal() ? 'Opening admin app…' : 'Usage & billing' }}
+                    <svg lucideExternalLink class="h-3.5 w-3.5"></svg>
+                  </a>
+                  @if (billingPortalError(); as message) {
+                    <p role="alert" class="mt-2 text-xs text-rose-600 dark:text-rose-300">
+                      {{ message }}
+                    </p>
+                  }
+                } @else {
+                  <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                    Usage isn't available right now.
+                  </p>
+                }
+              </div>
+            </div>
+
+            <div class="mt-5 flex flex-wrap gap-3">
+              <button
+                type="button"
+                (click)="openDashboard()"
+                class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-accent-500 px-5 text-sm font-semibold text-white outline-hidden transition hover:bg-accent-600 hover:text-white focus-visible:ring-2 focus-visible:ring-accent-300"
+              >
+                Go to dashboard
+                <svg lucideArrowRight class="h-4 w-4"></svg>
+              </button>
+              <a
+                routerLink="/settings"
+                class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-white px-5 text-sm font-semibold text-slate-700 ring-1 ring-slate-300 ring-inset transition hover:bg-slate-50 hover:text-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:ring-slate-600 dark:hover:bg-slate-700"
+              >
+                Appearance &amp; visibility
+              </a>
+            </div>
+          } @else {
+            <div class="flex items-start gap-3">
+              <span
+                class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent-50 text-accent-600 dark:bg-accent-500/10 dark:text-accent-300"
+              >
+                <svg lucideRocket class="h-5 w-5"></svg>
+              </span>
+              <div>
+                <h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">
+                  Enable Miyya on your storefront
+                </h2>
+                <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                  Until now only you could see Miyya. This shows it to every visitor of
+                  {{ storeHost() }}. You can hide it again any time from Settings.
+                </p>
+              </div>
+            </div>
+
+            @if (launchResult(); as result) {
+              @if (result.published && !result.verified) {
+                <div
+                  class="mt-5 rounded-xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-500/25 dark:bg-amber-500/10"
+                  data-testid="setup-launch-unverified"
+                >
+                  <p
+                    class="flex items-start gap-2 text-sm font-semibold text-amber-900 dark:text-amber-200"
+                  >
+                    <svg lucideTriangleAlert class="mt-0.5 h-4 w-4 shrink-0"></svg>
+                    Published, but not seen yet
+                  </p>
+                  <p class="mt-1 text-sm text-amber-800 dark:text-amber-200/90">
+                    {{ result.message }}
+                  </p>
+                </div>
+              }
+            }
+            @if (launchError(); as message) {
+              <p
+                role="alert"
+                class="mt-5 flex items-start gap-2 rounded-lg bg-rose-50 p-3 text-sm text-rose-700 dark:bg-rose-500/10 dark:text-rose-300"
+                data-testid="setup-launch-error"
+              >
+                <svg lucideTriangleAlert class="mt-0.5 h-4 w-4 shrink-0"></svg>{{ message }}
+              </p>
+            }
+
+            <div class="mt-5 flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                (click)="enableOnStorefront()"
+                [disabled]="isLaunching()"
+                data-testid="setup-enable"
+                class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-accent-500 px-5 text-sm font-semibold text-white outline-hidden transition hover:bg-accent-600 hover:text-white focus-visible:ring-2 focus-visible:ring-accent-300 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                @if (isLaunching()) {
+                  <svg lucideLoaderCircle class="h-4 w-4 animate-spin"></svg>
+                  Publishing and checking…
+                } @else if (launchResult() || launchError()) {
+                  <svg lucideRefreshCw class="h-4 w-4"></svg>
+                  Retry
+                } @else {
+                  <svg lucideRocket class="h-4 w-4"></svg>
+                  Enable Miyya on storefront
+                }
+              </button>
+
+              @if (launchResult()?.published) {
+                <a
+                  [href]="storefrontUrl"
+                  target="_blank"
+                  rel="noopener"
+                  class="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
+                >
+                  Open my storefront
+                  <svg lucideExternalLink class="h-3.5 w-3.5"></svg>
+                </a>
+                <button
+                  type="button"
+                  (click)="confirmSeenOnStorefront()"
+                  [disabled]="isConfirmingLaunch()"
+                  data-testid="setup-confirm-seen"
+                  class="text-sm font-semibold text-accent-600 underline decoration-dotted hover:text-accent-700 disabled:opacity-60 dark:text-accent-300"
+                >
+                  I can see Miyya on my storefront
+                </button>
+              }
+            </div>
+          }
+        }
+      }
+    }
+  </section>
+
+  @if (showConnectionChoice()) {
+    <div
+      class="fixed inset-0 z-100003 flex items-center justify-center bg-slate-950/55 p-4 backdrop-blur-sm"
+      role="presentation"
+    >
+      <section
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="connection-choice-title"
+        class="relative flex max-h-[calc(100dvh-2rem)] w-full max-w-xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-slate-900"
+      >
+        <button
+          type="button"
+          (click)="closeConnectionChoice()"
+          [disabled]="isConnecting()"
+          aria-label="Close connection options"
+          class="absolute right-3 top-3 z-10 rounded-lg bg-white p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 focus-visible:ring-2 focus-visible:ring-accent-300 disabled:opacity-50 dark:bg-slate-900 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+        >
+          <svg lucideX class="h-5 w-5"></svg>
+        </button>
+
+        <div class="min-h-0 overflow-y-auto overscroll-contain px-6 pt-10 pb-5 sm:px-8">
+          <img
+            [src]="connectionIllustrationSrc"
+            alt="WooCommerce store connection"
+            class="mx-auto h-28 w-auto object-contain"
+          />
+          <div class="mt-3 text-center">
+            <h2
+              id="connection-choice-title"
+              class="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-50"
+            >
+              Connect your WooCommerce store
+            </h2>
+            <p class="mx-auto mt-2 max-w-md text-sm text-slate-500 dark:text-slate-400">
+              Choose how you want to continue. You can follow every step yourself, or let Miyya
+              continue setup once your store is connected.
+            </p>
+          </div>
+
+          <div class="mt-6 space-y-3">
+            <button
+              type="button"
+              (click)="selectConnectionMode('automatic')"
+              [disabled]="isConnecting()"
+              [attr.aria-pressed]="connectionMode() === 'automatic'"
+              data-testid="setup-mode-automatic"
+              class="flex w-full items-center gap-4 rounded-xl border p-4 text-left transition focus-visible:ring-2 focus-visible:ring-accent-300"
+              [class]="
+                connectionMode() === 'automatic'
+                  ? 'border-accent-500 bg-accent-50/70 dark:border-accent-400 dark:bg-accent-500/10'
+                  : 'border-slate-200 hover:border-slate-300 dark:border-slate-700 dark:hover:border-slate-600'
+              "
+            >
+              <span
+                class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2"
+                [class]="
+                  connectionMode() === 'automatic'
+                    ? 'border-accent-500'
+                    : 'border-slate-300 dark:border-slate-600'
+                "
+              >
+                @if (connectionMode() === 'automatic') {
+                  <span class="h-3 w-3 rounded-full bg-accent-500"></span>
+                }
+              </span>
+              <span
+                class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white text-accent-600 shadow-sm dark:bg-slate-800 dark:text-accent-300"
+                ><svg lucideZap class="h-5 w-5"></svg
+              ></span>
+              <span>
+                <span
+                  class="flex flex-wrap items-center gap-2 text-sm font-semibold text-slate-900 dark:text-slate-100"
+                  >One click (Automatic)
+                  <span
+                    class="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300"
+                    >Recommended</span
+                  ></span
+                >
+                <span class="mt-1 block text-sm text-slate-500 dark:text-slate-400"
+                  >Miyya continues the available setup work once your store is connected.</span
+                >
+              </span>
+            </button>
+
+            <button
+              type="button"
+              (click)="selectConnectionMode('manual')"
+              [disabled]="isConnecting()"
+              [attr.aria-pressed]="connectionMode() === 'manual'"
+              data-testid="setup-mode-manual"
+              class="flex w-full items-center gap-4 rounded-xl border p-4 text-left transition focus-visible:ring-2 focus-visible:ring-accent-300"
+              [class]="
+                connectionMode() === 'manual'
+                  ? 'border-accent-500 bg-accent-50/70 dark:border-accent-400 dark:bg-accent-500/10'
+                  : 'border-slate-200 hover:border-slate-300 dark:border-slate-700 dark:hover:border-slate-600'
+              "
+            >
+              <span
+                class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2"
+                [class]="
+                  connectionMode() === 'manual'
+                    ? 'border-accent-500'
+                    : 'border-slate-300 dark:border-slate-600'
+                "
+              >
+                @if (connectionMode() === 'manual') {
+                  <span class="h-3 w-3 rounded-full bg-accent-500"></span>
+                }
+              </span>
+              <span
+                class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"
+                ><svg lucideSettings class="h-5 w-5"></svg
+              ></span>
+              <span>
+                <span class="block text-sm font-semibold text-slate-900 dark:text-slate-100"
+                  >Continue (Manual)</span
+                >
+                <span class="mt-1 block text-sm text-slate-500 dark:text-slate-400"
+                  >Follow the current step-by-step setup at your own pace.</span
+                >
+              </span>
+            </button>
+          </div>
+
+          <label
+            class="mt-5 flex cursor-pointer items-start gap-3 border-y border-slate-100 py-4 text-sm text-slate-600 dark:border-slate-800 dark:text-slate-300"
+          >
+            <input
+              type="checkbox"
+              [checked]="termsAccepted()"
+              [disabled]="isConnecting()"
+              (change)="setTermsAccepted($any($event.target).checked)"
+              class="mt-0.5 h-4 w-4 rounded border-slate-300 text-accent-500 focus:ring-accent-300"
+            />
+            <span
+              >I authorize the disclosed
+              <button
+                type="button"
+                (click)="openTerms()"
+                [disabled]="isConnecting()"
+                data-testid="setup-open-terms"
+                class="font-semibold text-accent-600 underline underline-offset-2 hover:text-accent-700 dark:text-accent-300"
+              >
+                Connection and Data Use</button
+              >.
+              <span class="text-slate-400 dark:text-slate-500"
+                >Required before connecting, including manual approval.</span
+              ></span
+            >
+          </label>
+
+          <p
+            data-testid="setup-consent"
+            class="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs leading-relaxed text-slate-600 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-300"
+          >
+            By pressing <strong>Allow &amp; connect</strong> you allow Miyya to
+            <strong>read</strong> your products, categories and prices. It cannot add, change or
+            delete anything in your store, and you can disconnect at any time in Settings.
+          </p>
+        </div>
+
+        <div class="shrink-0 border-t border-slate-100 px-6 py-5 sm:px-8 dark:border-slate-800">
+          <div role="status" aria-live="polite" aria-atomic="true">
+            @if (isConnecting()) {
+              <p class="mb-4 text-sm text-slate-600 dark:text-slate-300">
+                Preparing your secure connection. Please keep this page open…
+              </p>
+            }
+          </div>
+          @if (connectError(); as message) {
+            <p
+              role="alert"
+              class="mb-4 max-h-32 overflow-y-auto rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm wrap-anywhere text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300"
+            >
+              {{ message }}
+            </p>
+          }
+          <div class="grid grid-cols-1 gap-3 min-[400px]:grid-cols-2">
+            <button
+              type="button"
+              (click)="closeConnectionChoice()"
+              [disabled]="isConnecting()"
+              class="inline-flex h-12 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-accent-300 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              (click)="connect()"
+              [disabled]="!canConnectFromChoice() || isConnecting()"
+              [attr.aria-busy]="isConnecting()"
+              data-testid="setup-confirm-connect"
+              class="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-accent-500 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-accent-600 focus-visible:ring-2 focus-visible:ring-accent-300"
+              [class]="
+                isConnecting()
+                  ? 'disabled:cursor-wait'
+                  : 'disabled:cursor-not-allowed disabled:opacity-50'
+              "
+            >
+              @if (isConnecting()) {
+                <svg
+                  lucideLoaderCircle
+                  aria-hidden="true"
+                  class="h-4 w-4 animate-spin motion-reduce:animate-none"
+                ></svg>
+                Connecting…
+              } @else {
+                {{ connectError() ? 'Try again' : 'Allow & connect' }}
+                <svg lucideArrowRight aria-hidden="true" class="h-4 w-4 shrink-0"></svg>
+              }
+            </button>
+          </div>
+        </div>
+      </section>
+    </div>
+  }
+  @if (showTerms()) {
+    <div class="relative z-100004"><app-terms-component (closed)="closeTerms()" /></div>
+  }
+</div>

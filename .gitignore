@@ -1,0 +1,14 @@
+node_modules/
+.angular/
+dist/
+coverage/
+out-tsc/
+.vscode/
+.idea/
+.env
+.env.*
+*.log
+.DS_Store
+Thumbs.db
+src/build-info.ts
+public/version.json

@@ -1,0 +1,76 @@
+<section
+  aria-label="Resolve store identity"
+  class="mt-5 space-y-3 rounded-xl border border-amber-300 bg-amber-50 p-4 text-left text-sm text-amber-950 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-100"
+>
+  @if (needsConnection()) {
+    <p>
+      For a move, start a migration request here and approve WooCommerce access. Then ask the
+      account owner to review it under Stores → Review migrations in the Miyya portal.
+    </p>
+    <button
+      type="button"
+      (click)="startMigration.emit()"
+      [disabled]="busy()"
+      class="rounded-lg bg-accent-600 px-4 py-2 font-semibold text-white focus-visible:ring-2 focus-visible:ring-accent-400 disabled:opacity-50"
+    >
+      Start migration request
+    </button>
+  } @else {
+    <p>
+      To move the original store and keep its history, ask the account owner to approve this
+      destination under Stores → Review migrations in the Miyya portal. Then check approval again
+      here.
+    </p>
+  }
+  <div class="flex flex-wrap gap-3">
+    <button
+      type="button"
+      data-testid="identity-retry"
+      (click)="retry.emit()"
+      [disabled]="busy()"
+      class="rounded-lg border border-amber-400 px-3 py-2 font-semibold focus-visible:ring-2 focus-visible:ring-accent-400 disabled:opacity-50"
+    >
+      Check approval again
+    </button>
+    <button
+      type="button"
+      data-testid="identity-separate"
+      (click)="connectSeparate()"
+      [disabled]="busy()"
+      class="rounded-lg border border-amber-400 px-3 py-2 font-semibold focus-visible:ring-2 focus-visible:ring-accent-400 disabled:opacity-50"
+    >
+      {{ busy() ? 'Connecting…' : 'Connect as separate store' }}
+    </button>
+  </div>
+  <div class="space-y-2 border-t border-amber-300 pt-3 dark:border-amber-500/30">
+    <label for="migration-source-code" class="block font-semibold">Original Store Code</label>
+    <p id="migration-source-help" class="text-xs">
+      For an older installation or a different source store, find the original Store Code under
+      Stores in the Miyya portal. Prepare a new request, then ask that store's owner to approve the
+      destination.
+    </p>
+    <input
+      id="migration-source-code"
+      type="text"
+      maxlength="100"
+      autocomplete="off"
+      [value]="sourceCode()"
+      (input)="sourceCode.set($any($event.target).value)"
+      [disabled]="busy()"
+      aria-describedby="migration-source-help"
+      class="w-full rounded-lg border border-amber-400 bg-white px-3 py-2 text-slate-900 focus-visible:ring-2 focus-visible:ring-accent-400 disabled:opacity-50 dark:bg-slate-900 dark:text-slate-100"
+    />
+    <button
+      type="button"
+      data-testid="identity-prepare-migration"
+      (click)="prepareMigration()"
+      [disabled]="busy() || !sourceCode().trim() || sourceCode().trim().length > 100"
+      class="rounded-lg bg-accent-600 px-4 py-2 font-semibold text-white focus-visible:ring-2 focus-visible:ring-accent-400 disabled:opacity-50"
+    >
+      {{ busy() ? 'Preparing…' : 'Prepare migration' }}
+    </button>
+  </div>
+  @if (error()) {
+    <p role="alert">{{ error() }}</p>
+  }
+</section>

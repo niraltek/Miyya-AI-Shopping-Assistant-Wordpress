@@ -1,0 +1,82 @@
+<div class="flex h-full min-h-0 flex-col bg-white dark:bg-slate-900">
+  <div
+    class="shrink-0 border-b border-slate-200 bg-white/95 px-3 py-2.5 pr-11 dark:border-slate-800 dark:bg-slate-900/95"
+  >
+    <div class="flex items-center gap-2">
+      <span
+        class="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-accent-500/10 text-accent-600 dark:bg-accent-400/10 dark:text-accent-400"
+      >
+        <svg lucideScale class="h-3.5 w-3.5"></svg>
+      </span>
+      <p class="text-sm font-semibold text-slate-800 dark:text-slate-100">Comparison</p>
+      <span
+        class="rounded-full bg-slate-100 px-1.5 py-0.5 text-[11px] font-semibold tabular-nums text-slate-600 dark:bg-slate-800 dark:text-slate-300"
+        >{{ count() }}</span
+      >
+    </div>
+  </div>
+
+  <div class="min-h-0 flex-1 overflow-x-hidden overflow-y-auto scrollbar-thin">
+    <div class="grid w-full text-xs" [style.grid-template-columns]="gridColumns()">
+      <div
+        class="sticky top-0 left-0 z-30 border-b border-slate-200 bg-white p-2 dark:border-slate-800 dark:bg-slate-900"
+      ></div>
+      @for (product of products(); track product.productId) {
+        <div
+          class="sticky top-0 z-20 border-b border-l border-slate-200 bg-white p-2 dark:border-slate-800 dark:bg-slate-900"
+        >
+          <div class="flex min-w-0 flex-col items-start gap-1">
+            <img
+              [src]="product.imageUrl"
+              [alt]="product.name"
+              class="h-10 w-10 shrink-0 rounded-lg bg-slate-100 object-contain p-0.5 dark:bg-slate-800"
+            />
+
+            <span
+              class="min-w-0 text-[11px] leading-tight font-semibold break-words text-slate-800 dark:text-slate-100"
+            >
+              {{ product.name }}
+            </span>
+          </div>
+        </div>
+      }
+      @for (row of rows(); track row.field) {
+        <div
+          class="sticky left-0 z-10 border-b border-slate-100 bg-white p-2 font-medium break-words text-slate-500 dark:border-slate-800/60 dark:bg-slate-900 dark:text-slate-400"
+        >
+          {{ row.label }}
+          @if (row.isLive) {
+            <span
+              class="ml-1 inline-flex items-center gap-0.5 align-middle text-[9px] font-semibold text-emerald-600 uppercase dark:text-emerald-400"
+              title="Checked with the store just now"
+            >
+              <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+              Live
+            </span>
+          } @else if (row.field === 'price' || row.field === 'stock_status') {
+            <span class="mt-1 block text-[10px] font-normal text-slate-500 dark:text-slate-400">
+              Not live verified
+            </span>
+          }
+        </div>
+        @for (value of row.values; track $index) {
+          <div class="border-b border-l border-slate-100 p-2 break-words dark:border-slate-800/60">
+            @if (value) {
+              <span class="text-slate-700 dark:text-slate-200">{{
+                displayValue(row.field, value, $index)
+              }}</span>
+            } @else {
+              <span class="text-slate-400 italic dark:text-slate-500">{{ notListed }}</span>
+            }
+          </div>
+        }
+      }
+    </div>
+
+    @if (!rows().length && count()) {
+      <p class="p-3 text-xs text-slate-500 dark:text-slate-400">
+        The store hasn't listed any details these products can be compared on.
+      </p>
+    }
+  </div>
+</div>

@@ -1,0 +1,301 @@
+<div class="px-4 py-5 sm:px-8 sm:py-6 lg:px-10">
+  <section
+    class="aa-rise relative overflow-hidden rounded-3xl border border-indigo-100 bg-linear-to-br from-indigo-50 via-violet-50 to-blue-50 p-5 sm:p-6 dark:border-slate-800 dark:from-slate-900 dark:via-slate-900 dark:to-slate-950">
+    <div aria-hidden="true" class="pointer-events-none absolute inset-0 overflow-hidden">
+      <div
+        class="aa-drift absolute -top-24 -right-16 h-64 w-64 rounded-full bg-violet-400/20 blur-3xl dark:bg-violet-500/10">
+      </div>
+      <div
+        class="aa-drift absolute -bottom-24 -left-10 h-56 w-56 rounded-full bg-blue-400/15 blur-3xl dark:bg-blue-500/10"
+        style="animation-delay: -7s"></div>
+    </div>
+
+    <div class="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+      <div class="min-w-0">
+        @if (isLoading()) {
+        <span class="aa-skeleton inline-block h-4 w-32 rounded"></span>
+        } @else {
+        <p class="text-sm font-medium text-slate-500 dark:text-slate-400">Welcome back! 👋</p>
+        }
+
+        <h1 class="mt-1.5 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl dark:text-slate-50">
+          {{ isConnected() ? 'Miyya is ready' : 'Miyya setup' }}
+        </h1>
+        <p class="mt-1.5 text-sm text-slate-500 dark:text-slate-400">
+          Connect, sync and let AI help you grow your store.
+        </p>
+
+        <div class="mt-4 flex flex-wrap items-center gap-3">
+          @if (!isConnected() && !connectionError()) {
+          <a routerLink="/setup"
+            class="aa-lift group inline-flex shrink-0 items-center gap-2 rounded-xl bg-linear-to-br from-accent-500 to-accent-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-accent-500/25 outline-hidden transition-shadow hover:text-white hover:shadow-xl hover:shadow-accent-500/30 focus-visible:ring-2 focus-visible:ring-accent-300 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900">
+            Connect your store
+            <svg lucideArrowRight class="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1"></svg>
+          </a>
+          }
+
+          <a routerLink="/chat"
+            class="aa-lift group inline-flex shrink-0 items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold outline-hidden transition-shadow focus-visible:ring-2 focus-visible:ring-accent-300 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900"
+            [class]="
+              isConnected()
+                ? 'bg-linear-to-br from-accent-500 to-accent-600 text-white shadow-lg shadow-accent-500/25 hover:text-white hover:shadow-xl hover:shadow-accent-500/30'
+                : 'bg-white text-accent-700 shadow-sm ring-1 ring-inset ring-accent-200 hover:bg-accent-50 hover:text-accent-800 dark:bg-slate-800 dark:text-accent-300 dark:ring-accent-500/30 dark:hover:bg-slate-700 dark:hover:text-accent-200'
+            ">
+            Ask Miyya
+            <svg lucideArrowRight class="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1"></svg>
+          </a>
+        </div>
+      </div>
+
+      <div class="relative hidden h-32 w-52 shrink-0 lg:block" aria-hidden="true">
+        <img [src]="airobotImageSrc" alt="" class="h-32 w-48 translate-x-2 object-contain" />
+      </div>
+    </div>
+  </section>
+
+  <div class="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-3">
+    @if (isLoading()) {
+    @for (i of skeletonCards; track i) {
+    <div
+      class="aa-rise aa-stagger rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900"
+      [style]="'--aa-i:' + i">
+      <div class="aa-skeleton h-10 w-10 rounded-xl"></div>
+      <div class="aa-skeleton mt-4 h-3 w-20 rounded"></div>
+      <div class="aa-skeleton mt-2.5 h-6 w-28 rounded"></div>
+      <div class="aa-skeleton mt-2 h-3 w-24 rounded"></div>
+    </div>
+    }
+    } @else {
+    <div
+      class="aa-rise aa-stagger aa-lift group @container relative flex flex-col overflow-hidden rounded-2xl border border-emerald-100 bg-linear-to-br from-emerald-50/80 via-white to-white p-4 shadow-sm hover:shadow-lg dark:border-slate-800 dark:from-emerald-500/10 dark:via-slate-900 dark:to-slate-900"
+      style="--aa-i: 0">
+      <div class="mb-4 flex items-start gap-4">
+        <div
+          class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-600 shadow-sm shadow-emerald-500/10 transition-transform duration-300 group-hover:scale-105 dark:bg-emerald-500/15 dark:text-emerald-400">
+          <svg lucideStore class="h-6 w-6"></svg>
+        </div>
+
+        <div class="min-w-0 flex-1">
+          <p class="text-xs font-semibold tracking-wide text-slate-500 uppercase dark:text-slate-400">
+            Store Status
+          </p>
+          <p class="mt-1.5">
+            <span class="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset"
+              [class]="
+                isConnected()
+                  ? 'bg-emerald-50 text-emerald-700 ring-emerald-600/20 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-400/20'
+                  : 'bg-amber-50 text-amber-700 ring-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300 dark:ring-amber-400/20'
+              ">
+              <span class="h-2 w-2 rounded-full" [class]="isConnected() ? 'bg-emerald-500' : 'bg-amber-500'"></span>
+              {{ storeStatusLabel() }}
+            </span>
+          </p>
+          <p class="mt-1.5 text-sm text-slate-500 dark:text-slate-400">
+            {{ connectionError() ? 'Refresh to check your backend connection.' :
+            isConnected() ? connectedStoreHost() : 'Connect your store to get started.' }}
+          </p>
+        </div>
+
+        <div class="relative hidden h-16 w-16 shrink-0 items-center justify-center @sm:flex @lg:h-20 @lg:w-20" aria-hidden="true">
+          <div class="absolute inset-2 rounded-full bg-emerald-200/40 dark:bg-emerald-500/10"></div>
+          <svg lucidePlugZap
+            class="relative h-9 w-9 -rotate-12 @lg:h-12 @lg:w-12 text-emerald-500 drop-shadow-md transition-transform duration-300 group-hover:rotate-0 dark:text-emerald-400"></svg>
+          @if (!isConnected()) {
+          <span
+            class="absolute top-0 right-0 flex h-5 w-5 items-center justify-center rounded-full bg-orange-500 text-xs font-bold text-white shadow-md ring-2 ring-white dark:ring-slate-900">!</span>
+          }
+        </div>
+      </div>
+
+      <a [routerLink]="isConnected() ? '/settings' : '/setup'"
+        class="group/cta mt-auto flex items-center justify-between rounded-2xl bg-emerald-100/60 px-4 py-2.5 text-sm font-bold text-emerald-700 outline-hidden transition-colors hover:bg-emerald-100 hover:text-emerald-800 focus-visible:ring-2 focus-visible:ring-emerald-400 dark:bg-emerald-500/10 dark:text-emerald-300 dark:hover:bg-emerald-500/20">
+        {{ isConnected() ? 'Store settings' : 'Connect your store' }}
+        <span
+          class="flex h-8 w-8 items-center justify-center rounded-full bg-white text-emerald-600 shadow-sm transition-transform duration-300 group-hover/cta:translate-x-1 dark:bg-slate-800 dark:text-emerald-300">
+          <svg lucideArrowRight class="h-3.5 w-3.5"></svg>
+        </span>
+      </a>
+    </div>
+
+    <div
+      class="aa-rise aa-stagger aa-lift group @container relative flex flex-col overflow-hidden rounded-2xl border border-violet-100 bg-linear-to-br from-violet-50/80 via-white to-white p-4 shadow-sm hover:shadow-lg dark:border-slate-800 dark:from-violet-500/10 dark:via-slate-900 dark:to-slate-900"
+      style="--aa-i: 1">
+      <div class="mb-4 flex items-start gap-4">
+        <div
+          class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-violet-100 text-violet-600 shadow-sm shadow-violet-500/10 transition-transform duration-300 group-hover:scale-105 dark:bg-violet-500/15 dark:text-violet-400">
+          <svg lucidePackage class="h-6 w-6"></svg>
+        </div>
+
+        <div class="min-w-0 flex-1">
+          <p class="text-xs font-semibold tracking-wide text-slate-500 uppercase dark:text-slate-400">
+            Products
+          </p>
+          <p class="mt-1.5 truncate text-2xl font-bold text-slate-900 dark:text-slate-50">
+            {{ productsCount() }}
+          </p>
+          <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">{{ productsHint() }}</p>
+        </div>
+
+        <div class="relative hidden h-16 w-16 shrink-0 items-center justify-center @sm:flex @lg:h-20 @lg:w-20" aria-hidden="true">
+          <div class="absolute inset-2 rounded-full bg-violet-200/40 dark:bg-violet-500/10"></div>
+          <svg lucideBoxes
+            class="relative h-9 w-9 text-violet-400 @lg:h-12 @lg:w-12 drop-shadow-md transition-transform duration-300 group-hover:-translate-y-1 dark:text-violet-400"></svg>
+        </div>
+      </div>
+
+      <a routerLink="/catalog-sync"
+        class="group/cta mt-auto flex items-center justify-between rounded-2xl bg-violet-100/60 px-4 py-2.5 text-sm font-bold text-violet-700 outline-hidden transition-colors hover:bg-violet-100 hover:text-violet-800 focus-visible:ring-2 focus-visible:ring-violet-400 dark:bg-violet-500/10 dark:text-violet-300 dark:hover:bg-violet-500/20">
+        View products
+        <span
+          class="flex h-8 w-8 items-center justify-center rounded-full bg-white text-violet-600 shadow-sm transition-transform duration-300 group-hover/cta:translate-x-1 dark:bg-slate-800 dark:text-violet-300">
+          <svg lucideArrowRight class="h-3.5 w-3.5"></svg>
+        </span>
+      </a>
+    </div>
+
+    <div
+      class="aa-rise aa-stagger aa-lift group @container relative flex flex-col overflow-hidden rounded-2xl border border-blue-100 bg-linear-to-br from-blue-50/80 via-white to-white p-4 shadow-sm hover:shadow-lg dark:border-slate-800 dark:from-blue-500/10 dark:via-slate-900 dark:to-slate-900"
+      style="--aa-i: 2">
+      <div class="mb-4 flex items-start gap-4">
+        <div
+          class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-100 text-blue-600 shadow-sm shadow-blue-500/10 transition-transform duration-300 group-hover:scale-105 dark:bg-blue-500/15 dark:text-blue-400">
+          <svg lucideRefreshCw class="h-6 w-6"></svg>
+        </div>
+
+        <div class="min-w-0 flex-1">
+          <p class="text-xs font-semibold tracking-wide text-slate-500 uppercase dark:text-slate-400">
+            Last Sync
+          </p>
+          <p class="mt-1 truncate text-xl font-bold text-slate-900 dark:text-slate-50">
+            {{ lastSyncAt() ? (lastSyncAt() | date: 'MMMM d, y') : lastSyncValue() }}
+          </p>
+          <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
+            @if (lastSyncAt() && !connectionError()) {
+            Last synced at {{ lastSyncAt() | date: 'h:mm a' }}
+            } @else {
+            {{ lastSyncHint() }}
+            }
+          </p>
+        </div>
+
+        <div class="relative hidden h-16 w-16 shrink-0 items-center justify-center @sm:flex @lg:h-20 @lg:w-20" aria-hidden="true">
+          <div class="absolute inset-2 rounded-full bg-blue-200/40 dark:bg-blue-500/10"></div>
+          <svg lucideListChecks class="relative h-8 w-8 text-blue-300 @lg:h-10 @lg:w-10 drop-shadow-md dark:text-blue-400/70"></svg>
+          <span
+            class="absolute right-0 bottom-1 flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 text-white shadow-md ring-2 ring-white dark:ring-slate-900">
+            <svg lucideClock class="h-3 w-3"></svg>
+          </span>
+        </div>
+      </div>
+
+      <a routerLink="/catalog-sync"
+        class="group/cta mt-auto flex items-center justify-between rounded-2xl bg-blue-100/60 px-4 py-2.5 text-sm font-bold text-blue-700 outline-hidden transition-colors hover:bg-blue-100 hover:text-blue-800 focus-visible:ring-2 focus-visible:ring-blue-400 dark:bg-blue-500/10 dark:text-blue-300 dark:hover:bg-blue-500/20">
+        Sync now
+        <span
+          class="flex h-8 w-8 items-center justify-center rounded-full bg-white text-blue-600 shadow-sm transition-transform duration-300 group-hover/cta:translate-x-1 dark:bg-slate-800 dark:text-blue-300">
+          <svg lucideArrowRight class="h-3.5 w-3.5"></svg>
+        </span>
+      </a>
+    </div>
+    }
+  </div>
+
+  @if (isConnected()) {
+  <div class="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
+    @for (card of [catalogSyncCard(), embeddingIndexCard()]; track card.label; let i = $index) {
+    <div
+      class="aa-rise aa-stagger aa-lift group relative flex flex-col overflow-hidden rounded-2xl border bg-linear-to-br via-white to-white p-4 shadow-sm hover:shadow-lg dark:border-slate-800 dark:via-slate-900 dark:to-slate-900"
+      [class]="
+        i === 0
+          ? 'border-cyan-100 from-cyan-50/80 dark:from-cyan-500/10'
+          : 'border-fuchsia-100 from-fuchsia-50/80 dark:from-fuchsia-500/10'
+      "
+      [style]="'--aa-i:' + i">
+      <div class="flex items-start gap-4">
+        <div
+          class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl shadow-sm transition-transform duration-300 group-hover:scale-105"
+          [class]="
+            i === 0
+              ? 'bg-cyan-100 text-cyan-600 shadow-cyan-500/10 dark:bg-cyan-500/15 dark:text-cyan-400'
+              : 'bg-fuchsia-100 text-fuchsia-600 shadow-fuchsia-500/10 dark:bg-fuchsia-500/15 dark:text-fuchsia-400'
+          ">
+          @if (i === 0) {
+          <svg lucideDatabase class="h-6 w-6"></svg>
+          } @else {
+          <svg lucideSparkles class="h-6 w-6"></svg>
+          }
+        </div>
+
+        <div class="min-w-0 flex-1">
+          <div class="flex items-start justify-between gap-2">
+            <p class="text-xs font-semibold tracking-wide text-slate-500 uppercase dark:text-slate-400">
+              {{ card.label }}
+            </p>
+            <span class="inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset" [class]="
+                    card.state === 'ready'
+                      ? 'bg-emerald-50 text-emerald-700 ring-emerald-600/20 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-400/20'
+                      : card.state === 'failed'
+                        ? 'bg-red-50 text-red-700 ring-red-600/20 dark:bg-red-500/10 dark:text-red-300 dark:ring-red-400/20'
+                        : card.state === 'not_started'
+                          ? 'bg-slate-100 text-slate-500 ring-slate-500/10 dark:bg-slate-800 dark:text-slate-400 dark:ring-slate-400/10'
+                          : 'bg-accent-50 text-accent-700 ring-accent-600/20 dark:bg-accent-500/10 dark:text-accent-300 dark:ring-accent-400/20'
+                  ">
+              <span class="h-1.5 w-1.5 rounded-full" [class]="
+                      card.state === 'ready'
+                        ? 'bg-emerald-500'
+                        : card.state === 'failed'
+                          ? 'bg-red-500'
+                          : card.state === 'not_started'
+                            ? 'bg-slate-400'
+                            : 'bg-accent-500'
+                    "></span>
+              {{ card.stateLabel }}
+            </span>
+          </div>
+
+          @if (card.total !== undefined) {
+          <p class="mt-1.5 truncate text-xl font-bold text-slate-900 dark:text-slate-50">
+            {{ card.processed ?? 0 }} / {{ card.total }}
+          </p>
+          }
+          @if (card.progressPercent !== undefined && card.state === 'indexing') {
+          <div class="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+            <div class="h-full rounded-full bg-accent-500 transition-all duration-300"
+              [style.width.%]="card.progressPercent"></div>
+          </div>
+          <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
+            {{ card.progressPercent }}%
+          </p>
+          }
+          @if (card.state === 'failed' && card.failedCount) {
+          <p class="mt-1 text-sm text-red-600 dark:text-red-400">
+            {{ card.failedCount }} failed product{{ card.failedCount === 1 ? '' : 's' }}
+          </p>
+          }
+          @if (card.state === 'ready' && card.completedAt) {
+          <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
+            Completed {{ formatCompletedAt(card.completedAt) }}
+          </p>
+          }
+        </div>
+      </div>
+
+      @if (card.showRetry) {
+      <button type="button" (click)="retryIndexing()" [disabled]="isReindexing()"
+        class="group/cta mt-4 flex items-center justify-between rounded-2xl bg-red-100/60 px-4 py-2.5 text-sm font-bold text-red-700 outline-hidden transition-colors hover:bg-red-100 focus-visible:ring-2 focus-visible:ring-red-400 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-red-500/10 dark:text-red-300 dark:hover:bg-red-500/20">
+        {{ isReindexing() ? 'Retrying…' : 'Retry Indexing' }}
+        <span
+          class="flex h-8 w-8 items-center justify-center rounded-full bg-white text-red-600 shadow-sm dark:bg-slate-800 dark:text-red-300">
+          <svg lucideRefreshCw class="h-3.5 w-3.5" [class.animate-spin]="isReindexing()"></svg>
+        </span>
+      </button>
+      }
+    </div>
+    }
+  </div>
+
+  @if (reindexError()) {
+  <p class="mt-2 text-xs text-red-600 dark:text-red-400">{{ reindexError() }}</p>
+  }
+  }
+</div>

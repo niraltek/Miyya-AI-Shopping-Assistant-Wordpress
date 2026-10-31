@@ -1,0 +1,792 @@
+@if (!showPanel()) {
+  <button
+    type="button"
+    (click)="openChat()"
+    aria-label="Open Miyya chat"
+    [animate.enter]="motionClass('aa-launcher-enter')"
+    [animate.leave]="motionClass('aa-launcher-leave')"
+    class="aa-launcher fixed right-4 bottom-4 z-100001 grid h-[3.2rem] w-[3.2rem] place-items-center rounded-full bg-accent-700 text-white shadow-sm ring-[0.1rem] ring-accent-400/60 ring-offset-[0.2rem] ring-offset-white transition duration-200 ease-out hover:ring-[0.2rem] hover:ring-accent-400/60 hover:brightness-110 focus-visible:ring-[0.2rem] focus-visible:ring-accent-400 focus-visible:outline-none active:scale-95 motion-reduce:transition-none dark:ring-offset-slate-950"
+  >
+    <app-miyya-mark class="h-8 w-8" />
+    <span
+      class="absolute top-0.5 right-0.5 h-[0.6rem] w-[0.6rem] rounded-full border-[0.1rem] border-white bg-emerald-400 dark:border-slate-950"
+      aria-hidden="true"
+    ></span>
+  </button>
+} @else {
+  @if (isExpanded()) {
+    <div
+      class="aa-fade fixed inset-0 z-100000 bg-slate-900/40 backdrop-blur-sm"
+      (click)="toggleExpand()"
+      aria-hidden="true"
+    ></div>
+  }
+
+  <div
+    #panel
+    class="aa-chat-shell flex flex-col border-slate-900/10 bg-slate-50 shadow-2xl shadow-slate-900/30 dark:border-white/10 dark:bg-slate-950"
+    [animate.enter]="motionClass('aa-panel-enter')"
+    [animate.leave]="motionClass('aa-panel-leave')"
+    [class.aa-chat-shell--expanded]="isExpanded()"
+    [class.aa-chat-shell--floating]="floating()"
+    [class.aa-chat-shell--morphing]="morphing()"
+    [class]="panelClasses()"
+    [style.top]="isExpanded() ? expandedTop : null"
+    [style.transform]="
+      canDrag() ? 'translate(' + dragOffset().x + 'px, ' + dragOffset().y + 'px)' : null
+    "
+  >
+    <aside
+      id="chat-side-panel"
+      [class]="sidePanelWrapperClasses()"
+      [attr.aria-label]="showComparisonPanel() ? 'Product comparison' : 'Product results'"
+      [attr.aria-hidden]="!sidePanelVisible()"
+      [attr.inert]="sidePanelVisible() ? null : ''"
+      (keydown.escape)="closeSidePanel(); $event.stopPropagation()"
+    >
+      <button
+        type="button"
+        (click)="closeSidePanel()"
+        title="Close side panel"
+        aria-label="Close side panel"
+        class="aa-icon-button aa-panel-close absolute top-2 right-2 z-40"
+      >
+        <svg lucideX class="h-3.5 w-3.5"></svg>
+      </button>
+      @if (showProductPanel()) {
+        <app-product-results-panel-component
+          [products]="activeProducts()"
+          [selectedProductIds]="selectedProductIds()"
+          (toggleSelect)="toggleProductSelection($event)"
+          (clearSelection)="clearProductSelection()"
+          class="h-full w-full"
+        />
+      } @else if (showComparisonPanel()) {
+        <app-comparison-panel-component [table]="activeComparison()" class="h-full w-full" />
+      }
+    </aside>
+
+    <div class="order-2 flex min-h-0 flex-1 flex-col overflow-hidden" [class]="chatColumnClasses()">
+      <header
+        (pointerdown)="onDragPointerDown($event)"
+        (pointermove)="onDragPointerMove($event)"
+        (pointerup)="onDragPointerUp($event)"
+        (pointercancel)="onDragPointerUp($event)"
+        class="aa-chat-header relative flex shrink-0 items-center justify-between gap-2 overflow-hidden bg-linear-to-br from-accent-950 via-accent-900 to-accent-700 px-4 py-[0.6rem] select-none"
+        [class.cursor-grab]="canDrag()"
+        [class.touch-none]="canDrag()"
+      >
+        <div
+          class="aa-header-glow pointer-events-none absolute -top-28 -right-10 h-60 w-60 rounded-full"
+          aria-hidden="true"
+        ></div>
+        <div class="aa-chat-identity relative flex min-w-0 items-center gap-2.5">
+          <div
+            class="grid h-[2.4rem] w-[2.4rem] shrink-0 place-items-center rounded-[0.6rem] bg-white shadow-sm ring-1 ring-white/40 ring-inset"
+          >
+            <app-miyya-mark class="h-[1.8rem] w-[1.8rem] text-accent-700" />
+          </div>
+          <div class="min-w-0">
+            <p class="truncate text-sm leading-5 font-semibold tracking-tight text-white">Miyya</p>
+            <div class="flex h-4 items-center gap-1.5 text-[11px] text-white/75">
+              @if (hasSidePanel()) {
+                <button
+                  #sidePanelToggle
+                  type="button"
+                  (click)="toggleSidePanel()"
+                  aria-controls="chat-side-panel"
+                  [attr.aria-expanded]="sidePanelVisible()"
+                  class="rounded font-medium text-white underline-offset-2 hover:underline focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:outline-none"
+                >
+                  {{ sidePanelVisible() ? 'Hide' : 'Show' }} {{ sidePanelLabel() }} ({{
+                    sidePanelCount()
+                  }})
+                </button>
+              } @else {
+                <span class="relative flex h-2 w-2" aria-hidden="true">
+                  @if (copilotReady()) {
+                    <span
+                      class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-300 opacity-60 motion-reduce:hidden"
+                    ></span>
+                  }
+                  <span
+                    class="relative inline-flex h-2 w-2 rounded-full"
+                    [class]="
+                      copilotReady()
+                        ? 'bg-emerald-300'
+                        : assistantStatusLabel() === 'Checking…'
+                          ? 'animate-pulse bg-amber-300'
+                          : 'bg-rose-300'
+                    "
+                  ></span>
+                </span>
+                <span class="truncate"
+                  >{{ assistantStatusLabel() }}
+                  @if (copilotReady()) {
+                    · ready to help you shop
+                  }
+                </span>
+              }
+            </div>
+          </div>
+        </div>
+
+        <div
+          class="aa-header-actions relative flex shrink-0 items-center gap-2"
+          role="group"
+          aria-label="Chat controls"
+        >
+          <button
+            type="button"
+            (click)="requestClear()"
+            title="Clear conversation"
+            aria-label="Clear conversation"
+            class="aa-header-button"
+          >
+            <svg lucideTrash2 class="h-[18px] w-[18px]"></svg>
+          </button>
+
+          <button
+            type="button"
+            (click)="theme.toggleTheme()"
+            [title]="theme.isDarkMode() ? 'Light mode' : 'Dark mode'"
+            [attr.aria-label]="
+              theme.isDarkMode() ? 'Switch to light theme' : 'Switch to dark theme'
+            "
+            class="aa-header-button"
+          >
+            @if (theme.isDarkMode()) {
+              <svg lucideSun class="h-[18px] w-[18px]"></svg>
+            } @else {
+              <svg lucideMoon class="h-[18px] w-[18px]"></svg>
+            }
+          </button>
+
+          @if (canExpand()) {
+            <button
+              type="button"
+              (click)="toggleExpand()"
+              [title]="isExpanded() ? 'Minimize' : 'Maximize'"
+              [attr.aria-label]="isExpanded() ? 'Minimize chat' : 'Maximize chat'"
+              class="aa-header-button"
+            >
+              @if (isExpanded()) {
+                <svg lucideMinimize2 class="h-[18px] w-[18px]"></svg>
+              } @else {
+                <svg lucideMaximize2 class="h-[18px] w-[18px]"></svg>
+              }
+            </button>
+          }
+          @if (canClose()) {
+            <button
+              type="button"
+              (click)="closeChat()"
+              title="Close"
+              aria-label="Close chat"
+              class="aa-header-button"
+            >
+              <svg lucideX class="h-5 w-5"></svg>
+            </button>
+          }
+        </div>
+      </header>
+
+      <div class="relative min-h-0 flex-1">
+        <div
+          #scrollContainer
+          (scroll)="onMessagesScroll()"
+          (wheel)="onMessagesScrollIntent($event)"
+          (touchmove)="onMessagesScrollIntent($event)"
+          (pointerdown)="onMessagesScrollIntent($event)"
+          (keydown)="onMessagesScrollIntent($event)"
+          tabindex="0"
+          aria-label="Conversation"
+          class="aa-messages aa-conversation scrollbar-thin h-full overflow-y-auto px-5 pt-5 pb-3 outline-none focus-visible:ring-2 focus-visible:ring-accent-500/40 focus-visible:ring-inset"
+        >
+          @if (isFresh()) {
+            <div
+              class="aa-fade-up mx-auto flex max-w-2xl flex-col items-center pt-2 pb-5 text-center"
+            >
+              <div class="relative mb-5 grid h-24 w-24 place-items-center" aria-hidden="true">
+                <div
+                  class="absolute inset-2 -rotate-12 rounded-3xl border border-accent-500/20 bg-linear-to-br from-accent-100/80 to-white/40 dark:border-accent-400/20 dark:from-accent-700/30 dark:to-transparent"
+                ></div>
+                <div
+                  class="relative grid h-16 w-16 rotate-6 place-items-center rounded-[18px] border border-white/70 bg-linear-to-br from-accent-500 to-accent-800 text-white shadow-xl shadow-accent-800/25"
+                >
+                  <app-miyya-mark class="h-9 w-9 -rotate-6" />
+                </div>
+                <span
+                  class="absolute top-4 right-0 h-2 w-2 rounded-full bg-accent-300 ring-4 ring-accent-300/15"
+                ></span>
+                <span
+                  class="absolute bottom-2 left-1.5 h-1.5 w-1.5 rounded-full bg-accent-500"
+                ></span>
+              </div>
+              <span
+                class="text-[10px] font-bold tracking-[0.18em] text-accent-700 dark:text-accent-300"
+                >YOUR SHOPPING SHORTCUT</span
+              >
+              <h2
+                class="mt-2 text-[26px] leading-[1.15] font-semibold tracking-tight text-balance text-slate-900 dark:text-white"
+              >
+                Find the right thing,
+                <span
+                  class="bg-linear-to-r from-accent-900 via-accent-600 to-accent-400 bg-clip-text text-transparent dark:from-accent-300 dark:via-accent-400 dark:to-accent-200"
+                  >faster.</span
+                >
+              </h2>
+              <p
+                class="mx-auto mt-3 max-w-sm text-sm leading-6 text-pretty text-slate-600 dark:text-slate-300"
+              >
+                Tell me what you need. I can explore the catalog, compare picks, and help you
+                decide.
+              </p>
+              @if (starterCards().length) {
+                <div class="mt-6 w-full text-left">
+                  <p
+                    class="mb-2.5 px-1 text-[11px] font-semibold tracking-[0.14em] text-slate-500 uppercase dark:text-slate-400"
+                  >
+                    Try asking
+                  </p>
+                  <div class="grid gap-2.5" role="group" aria-label="Suggested questions">
+                    @for (starter of starterCards(); track starter.question) {
+                      <button
+                        type="button"
+                        (click)="sendMessage(starter.question)"
+                        class="group flex w-full items-center gap-3 rounded-2xl bg-white px-3.5 py-3 text-left shadow-sm ring-1 ring-slate-200/80 transition duration-200 hover:-translate-y-0.5 hover:shadow-md hover:ring-accent-300 focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:outline-none dark:bg-slate-900 dark:ring-slate-800 dark:hover:ring-accent-500/60"
+                      >
+                        <span
+                          class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-accent-50 text-accent-700 transition group-hover:bg-accent-100 dark:bg-accent-500/15 dark:text-accent-300"
+                        >
+                          <svg [lucideIcon]="starter.icon" class="h-5 w-5"></svg>
+                        </span>
+                        <span
+                          class="min-w-0 flex-1 text-[13px] font-semibold text-slate-900 dark:text-white"
+                          >{{ starter.question }}</span
+                        >
+                        <svg
+                          lucideArrowUpRight
+                          class="h-4 w-4 shrink-0 text-slate-400 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-accent-700 dark:group-hover:text-accent-300"
+                        ></svg>
+                      </button>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          }
+
+          <div
+            class="mx-auto flex max-w-2xl flex-col gap-5"
+            role="log"
+            aria-live="polite"
+            aria-relevant="additions text"
+          >
+            @for (message of messages(); track message.id) {
+              @if (isFresh() && message.role === 'assistant') {
+              } @else if (message.role === 'system') {
+                <div #msgEl class="flex items-center gap-2 py-1" role="status">
+                  <span class="h-px flex-1 bg-slate-200 dark:bg-slate-700"></span>
+                  <span
+                    class="flex min-w-0 items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400"
+                  >
+                    <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-accent-500"></span>
+                    <span class="truncate" [title]="message.text">{{ message.text }}</span>
+                  </span>
+                  <span class="h-px flex-1 bg-slate-200 dark:bg-slate-700"></span>
+                </div>
+              } @else {
+                <div
+                  #msgEl
+                  class="aa-turn flex flex-col gap-2.5"
+                  [class.items-end]="message.role === 'user'"
+                >
+                  @if (message.role === 'user') {
+                    <div
+                      class="aa-message-bubble aa-fade-up max-w-[85%] rounded-2xl rounded-br-md bg-linear-to-br from-accent-600 to-accent-800 px-4 py-2.5 text-sm leading-6 text-white shadow-md shadow-accent-900/15"
+                      [title]="message.time"
+                    >
+                      <p class="whitespace-pre-wrap">{{ message.text }}</p>
+                    </div>
+                  } @else {
+                    <div
+                      class="aa-message-bubble aa-message-bubble--assistant aa-fade-up min-w-0 text-sm leading-6 text-slate-800 dark:text-slate-100"
+                      [title]="answerTooltip(message)"
+                    >
+                      <p class="mb-2 flex items-center gap-2">
+                        <span
+                          class="grid h-6 w-6 place-items-center rounded-lg bg-linear-to-br from-accent-500 to-accent-800 text-white shadow-sm shadow-accent-900/20"
+                          aria-hidden="true"
+                        >
+                          <app-miyya-mark class="h-4 w-4" />
+                        </span>
+                        <span class="text-[13px] font-semibold text-slate-800 dark:text-slate-100"
+                          >Miyya</span
+                        >
+                        @if (isStreamingReply() && $last) {
+                          <span class="text-[11px] text-slate-400 dark:text-slate-500"
+                            >is writing…</span
+                          >
+                        }
+                      </p>
+                      @if (message.html) {
+                        <div
+                          class="aa-markdown prose prose-sm max-w-none text-sm leading-6 prose-slate dark:prose-invert prose-p:my-2 prose-ul:my-2 prose-li:my-0.5 prose-li:marker:text-accent-500 prose-strong:text-slate-900 dark:prose-strong:text-white prose-a:font-medium prose-a:text-accent-700 prose-a:no-underline hover:prose-a:underline dark:prose-a:text-accent-300"
+                          [innerHTML]="message.html"
+                        ></div>
+                      } @else {
+                        <p class="whitespace-pre-wrap">
+                          {{ message.text }}
+                          @if (isStreamingReply() && $last) {
+                            <span class="aa-caret" aria-hidden="true"></span>
+                          }
+                        </p>
+                      }
+                    </div>
+                  }
+                  @if (message.cartOffer) {
+                    <app-cart-offer-component
+                      [offer]="message.cartOffer"
+                      [disabled]="!$last || isTyping()"
+                      (answer)="answerCart($event)"
+                      (selectOption)="sendMessage($event)"
+                    />
+                  }
+                  @if (message.cartAction) {
+                    <div
+                      class="w-full rounded-xl border border-slate-200 p-3 text-sm dark:border-slate-700"
+                      role="status"
+                    >
+                      <p>{{ message.cartResult?.message || 'Updating cart?' }}</p>
+                      @if (
+                        message.cartResult &&
+                        (message.cartAction.action === 'view' ||
+                          message.cartAction.action === 'checkout')
+                      ) {
+                        @for (item of message.cartResult.items; track item.key) {
+                          <p class="mt-2 font-medium">{{ item.quantity }} ? {{ item.name }}</p>
+                          @for (option of item.variation ?? []; track option.attribute) {
+                            <span class="mr-2 text-xs"
+                              >{{ option.attribute }}: {{ option.value }}</span
+                            >
+                          }
+                        }
+                      }
+                      @if (message.cartResult && cart.cartUrl) {
+                        <a [href]="cart.cartUrl" target="_top" class="mt-2 inline-block underline"
+                          >View cart</a
+                        >
+                      }
+                      @if (
+                        message.cartAction.action === 'checkout' &&
+                        message.cartResult?.ok &&
+                        message.cartResult?.items?.length &&
+                        cart.checkoutUrl
+                      ) {
+                        <a [href]="cart.checkoutUrl" target="_top" class="ml-3 underline"
+                          >Proceed to checkout</a
+                        >
+                      }
+                    </div>
+                  }
+                  @if (message.categories?.length) {
+                    <div class="w-full min-w-0">
+                      <app-inline-category-grid-component
+                        [categories]="message.categories!"
+                        [disabled]="isTyping()"
+                        (select)="browseCategory($event)"
+                      />
+                    </div>
+                  }
+                  @if (showSearchProducts(message)) {
+                    <div class="aa-inline-products w-full min-w-0">
+                      <app-inline-product-list-component
+                        [products]="message.products!"
+                        [selectedProductIds]="selectedProductIds()"
+                        (toggleSelect)="toggleProductSelection($event)"
+                        (productOpened)="trackProduct(message, $event, 'card_open')"
+                        (productAdded)="trackProduct(message, $event, 'add_to_cart')"
+                      />
+                    </div>
+                  }
+                  @if (message.comparison?.products?.length) {
+                    <div class="w-full min-w-0">
+                      <app-inline-comparison-component
+                        [table]="message.comparison!"
+                        (openFull)="openComparison(message)"
+                      />
+                    </div>
+                  }
+                  @if (latestSuggestions(); as latest) {
+                    @if (latest.messageId === message.id) {
+                      <div
+                        class="aa-followups aa-fade-up flex w-full flex-wrap gap-1.5"
+                        role="group"
+                        aria-label="Suggested next steps"
+                      >
+                        @for (suggestion of latest.items; track suggestion.message) {
+                          <button
+                            type="button"
+                            (click)="sendSuggestion(suggestion)"
+                            class="aa-followup-chip max-w-full rounded-full bg-white px-3 py-1 text-left text-xs font-medium text-accent-800 ring-1 ring-accent-200 transition hover:bg-accent-50 hover:ring-accent-400 focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:outline-none dark:bg-slate-900 dark:text-accent-200 dark:ring-slate-700 dark:hover:bg-slate-800 dark:hover:ring-accent-500/60"
+                          >
+                            {{ suggestion.label }}
+                          </button>
+                        }
+                      </div>
+                    }
+                  }
+                  @if (message.role === 'assistant' && message.serverId) {
+                    <div
+                      class="flex w-full items-center gap-2 text-[11px] text-slate-400 dark:text-slate-500"
+                    >
+                      @if (checkedLive(message)) {
+                        <span>Prices checked live with the store</span>
+                      }
+
+                      <div class="ml-auto flex items-center gap-0.5">
+                        @if (message.feedback) {
+                          <span class="mr-1">Thanks for the feedback</span>
+                        }
+                        <button
+                          type="button"
+                          (click)="copyAnswer(message)"
+                          [title]="copiedMessageId() === message.id ? 'Copied!' : 'Copy'"
+                          [attr.aria-label]="
+                            copiedMessageId() === message.id ? 'Answer copied' : 'Copy answer'
+                          "
+                          class="grid h-8 w-8 place-items-center rounded-lg transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                          [class.text-emerald-600]="copiedMessageId() === message.id"
+                        >
+                          @if (copiedMessageId() === message.id) {
+                            <svg lucideCheck class="h-4 w-4"></svg>
+                          } @else {
+                            <svg lucideCopy class="h-4 w-4"></svg>
+                          }
+                        </button>
+                        <button
+                          type="button"
+                          (click)="submitThumbsUp(message)"
+                          [disabled]="!!message.feedback"
+                          [title]="
+                            message.feedback === 'up' ? 'You marked this helpful' : 'Helpful'
+                          "
+                          [attr.aria-pressed]="message.feedback === 'up'"
+                          class="grid h-8 w-8 place-items-center rounded-lg transition disabled:cursor-not-allowed"
+                          [class]="
+                            message.feedback === 'up'
+                              ? 'text-emerald-600'
+                              : message.feedback
+                                ? 'text-slate-300 dark:text-slate-600'
+                                : 'hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-500/10'
+                          "
+                        >
+                          <svg
+                            lucideThumbsUp
+                            class="h-4 w-4"
+                            [class.fill-current]="message.feedback === 'up'"
+                          ></svg>
+                        </button>
+                        <button
+                          type="button"
+                          (click)="openThumbsDownPrompt(message)"
+                          [disabled]="!!message.feedback"
+                          [title]="
+                            message.feedback === 'down'
+                              ? 'You marked this not helpful'
+                              : 'Not helpful'
+                          "
+                          [attr.aria-pressed]="message.feedback === 'down'"
+                          class="grid h-8 w-8 place-items-center rounded-lg transition disabled:cursor-not-allowed"
+                          [class]="
+                            message.feedback === 'down'
+                              ? 'text-rose-600'
+                              : message.feedback
+                                ? 'text-slate-300 dark:text-slate-600'
+                                : 'hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-500/10'
+                          "
+                        >
+                          <svg
+                            lucideThumbsDown
+                            class="h-4 w-4"
+                            [class.fill-current]="message.feedback === 'down'"
+                          ></svg>
+                        </button>
+                      </div>
+                    </div>
+                  }
+                  @if (message.isSearchError) {
+                    <button
+                      type="button"
+                      (click)="retryProductSearch()"
+                      class="inline-flex w-fit items-center gap-1.5 rounded-full bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-700 ring-1 ring-slate-200 transition hover:text-accent-700 hover:ring-accent-400 dark:bg-slate-900 dark:text-slate-200 dark:ring-slate-700"
+                    >
+                      <svg lucideRotateCcw class="h-3.5 w-3.5"></svg>
+                      Retry
+                    </button>
+                  }
+                </div>
+              }
+            }
+            @if (isTyping() && !isStreamingReply()) {
+              @let loadingLabel =
+                progressSteps().at(-1)?.label ??
+                (flowStepIndex() === flowFinalStepIndex
+                  ? finalStepLabel()
+                  : currentFlowStep().label);
+              <div
+                class="flex min-w-0 items-center gap-2"
+                role="status"
+                aria-label="What Miyya is doing"
+                [style.--flow-accent]="currentFlowStep().accent"
+              >
+                <span
+                  class="grid h-6 w-6 shrink-0 place-items-center rounded-lg bg-linear-to-br from-accent-500 to-accent-800 text-white shadow-sm shadow-accent-900/20"
+                  aria-hidden="true"
+                >
+                  <app-miyya-mark class="h-4 w-4" />
+                </span>
+                <div
+                  class="aa-flow-step"
+                  [class.aa-flow-step--shown]="progressSteps().length > 0 || flowStepShown()"
+                  aria-hidden="true"
+                >
+                  <span class="aa-flow-label">{{ loadingLabel }}</span>
+                  @if (progressSteps().length || flowStepIndex() !== flowFinalStepIndex) {
+                    <span class="aa-flow-dots"><i></i><i></i><i></i></span>
+                  }
+                </div>
+                <span class="sr-only">{{ loadingLabel }}</span>
+              </div>
+            }
+
+            <div #scrollAnchor></div>
+          </div>
+        </div>
+
+        @if (showScrollToBottom()) {
+          <button
+            type="button"
+            (click)="scrollToBottom()"
+            title="Jump to latest message"
+            aria-label="Jump to latest message"
+            class="aa-fade-up absolute right-4 bottom-3 z-10 grid h-10 w-10 place-items-center rounded-full bg-white text-accent-700 shadow-lg shadow-slate-900/10 ring-1 ring-slate-200 transition hover:-translate-y-0.5 hover:text-accent-800 dark:bg-slate-800 dark:text-accent-300 dark:ring-slate-700"
+          >
+            <svg lucideArrowDown class="h-[18px] w-[18px]"></svg>
+            @if (isTyping()) {
+              <span
+                class="absolute top-0 right-0 h-2.5 w-2.5 animate-pulse rounded-full bg-accent-500 ring-2 ring-white dark:ring-slate-800"
+              ></span>
+            }
+          </button>
+        }
+      </div>
+
+      @if (suggestions().length && !isFresh()) {
+        <div
+          class="aa-suggestions flex w-full shrink-0 flex-wrap gap-1.5 border-t border-slate-200/80 bg-white px-5 pt-2.5 pb-0.5 dark:border-slate-800 dark:bg-slate-900"
+          role="group"
+          aria-label="Suggested questions"
+        >
+          @for (suggestion of suggestions(); track suggestion) {
+            <button
+              type="button"
+              (click)="sendMessage(suggestion)"
+              class="max-w-full rounded-full bg-slate-50 px-3 py-1 text-left text-xs font-medium text-accent-800 ring-1 ring-accent-200 transition hover:bg-accent-50 hover:ring-accent-400 focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:outline-none dark:bg-slate-800/60 dark:text-accent-200 dark:ring-slate-700 dark:hover:bg-slate-800 dark:hover:ring-accent-500/60"
+            >
+              {{ suggestion }}
+            </button>
+          }
+        </div>
+      }
+
+      <div
+        class="aa-composer-footer shrink-0 border-t border-slate-200/80 bg-white px-5 pt-3 pb-2 dark:border-slate-800 dark:bg-slate-900"
+      >
+        @if (selectedProducts().length) {
+          <div class="mx-auto mb-2 flex max-w-2xl flex-wrap gap-1.5">
+            @for (product of selectedProducts(); track product.productId) {
+              <span
+                class="flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 py-1 pr-2 pl-1 text-xs text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+              >
+                <img
+                  [src]="product.imageUrl"
+                  [alt]="product.name"
+                  class="h-5 w-5 rounded-full object-cover"
+                />
+                <span class="max-w-32 truncate">{{ product.name }}</span>
+                <button
+                  type="button"
+                  (click)="removeSelectedProduct(product.productId)"
+                  [title]="'Remove ' + product.name"
+                  class="ml-0.5 leading-none text-slate-400 transition hover:text-slate-700 dark:hover:text-slate-100"
+                >
+                  ×
+                </button>
+              </span>
+            }
+          </div>
+        }
+
+        <div
+          (dragover)="onComposerDragOver($event)"
+          (dragleave)="onComposerDragLeave()"
+          (drop)="onComposerDrop($event)"
+          class="aa-composer relative mx-auto flex max-w-2xl items-end gap-2 rounded-2xl p-1.5 transition focus-within:ring-2 focus-within:ring-accent-500"
+          [class]="
+            isDraggingOverComposer()
+              ? 'bg-accent-50 ring-2 ring-accent-500 dark:bg-accent-500/10'
+              : 'bg-slate-50 ring-1 ring-slate-200 focus-within:bg-white dark:bg-slate-800/60 dark:ring-slate-700 dark:focus-within:bg-slate-800'
+          "
+        >
+          @if (isDraggingOverComposer()) {
+            <div
+              class="pointer-events-none absolute inset-0 flex items-center justify-center rounded-2xl bg-accent-50/95 text-xs font-medium text-accent-600 dark:bg-slate-800/95 dark:text-accent-400"
+            >
+              Drop product here to compare
+            </div>
+          }
+
+          <textarea
+            rows="1"
+            [ngModel]="draft()"
+            (ngModelChange)="draft.set($event)"
+            (keydown)="onComposerKeydown($event)"
+            (input)="autoGrow($event)"
+            [placeholder]="composerPlaceholder()"
+            aria-label="Message Miyya Chatbot"
+            [disabled]="!copilotReady() || isTyping()"
+            class="min-h-10 min-w-0 max-h-40 flex-1 resize-none bg-transparent px-3 py-2 text-sm leading-6 text-slate-800 placeholder:text-slate-400 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60 dark:text-slate-100 dark:placeholder:text-slate-500"
+          ></textarea>
+
+          <button
+            type="button"
+            (click)="sendMessage()"
+            [disabled]="!copilotReady() || !draft().trim() || isTyping()"
+            title="Send"
+            aria-label="Send message"
+            class="aa-send-button grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-linear-to-br from-accent-600 to-accent-800 text-white shadow-md shadow-accent-900/20 transition hover:brightness-110 active:scale-95 disabled:cursor-not-allowed disabled:bg-none disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none disabled:hover:brightness-100 dark:disabled:bg-slate-700 dark:disabled:text-slate-500"
+          >
+            <svg lucideSendHorizontal class="h-[18px] w-[18px]"></svg>
+          </button>
+        </div>
+        <div
+          class="mx-auto mt-1.5 flex max-w-2xl items-center justify-between gap-3 px-1 text-[11px] text-slate-400 dark:text-slate-500"
+        >
+          <span class="aa-composer-hint"
+            ><kbd class="font-sans font-semibold">Enter</kbd> to send ·
+            <kbd class="font-sans font-semibold">Shift + Enter</kbd> for a new line</span
+          >
+          <span class="ml-auto">Miyya can make mistakes.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  @if (showDeleteConfirm()) {
+    <div
+      class="fixed inset-0 z-100002 flex items-center justify-center bg-slate-900/50 p-4"
+      (click)="cancelClear()"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="aa-clear-title"
+    >
+      <div
+        class="w-full max-w-sm rounded-2xl bg-white p-5 shadow-xl dark:bg-slate-900"
+        (click)="$event.stopPropagation()"
+      >
+        <h3 id="aa-clear-title" class="text-sm font-semibold text-slate-800 dark:text-slate-100">
+          Clear conversation?
+        </h3>
+        <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+          This will delete all messages in this chat. This action cannot be undone.
+        </p>
+        <div class="mt-4 flex justify-end gap-2">
+          <button
+            type="button"
+            (click)="cancelClear()"
+            class="rounded-lg px-3 py-1.5 text-sm font-medium text-slate-600 transition hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            (click)="confirmClear()"
+            class="rounded-lg bg-red-500 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-red-600"
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+  @if (feedbackPromptFor()) {
+    <div
+      class="fixed inset-0 z-100002 flex items-center justify-center bg-slate-900/50 p-4"
+      (click)="cancelFeedbackPrompt()"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="aa-feedback-title"
+    >
+      <div
+        class="w-full max-w-sm rounded-2xl bg-white p-5 shadow-xl dark:bg-slate-900"
+        (click)="$event.stopPropagation()"
+      >
+        <h3 id="aa-feedback-title" class="text-sm font-semibold text-slate-800 dark:text-slate-100">
+          What went wrong?
+        </h3>
+        <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+          Optional — tell us what was off about this answer.
+        </p>
+        <div class="mt-3 flex flex-wrap gap-1.5" role="group" aria-label="Feedback reason">
+          @for (reason of feedbackReasons; track reason.code) {
+            <button
+              type="button"
+              (click)="feedbackReason.set(feedbackReason() === reason.code ? null : reason.code)"
+              [attr.aria-pressed]="feedbackReason() === reason.code"
+              class="rounded-full border px-2.5 py-1 text-xs transition"
+              [class]="
+                feedbackReason() === reason.code
+                  ? 'border-accent-500 bg-accent-50 text-accent-700 dark:bg-accent-500/10 dark:text-accent-300'
+                  : 'border-slate-200 text-slate-600 hover:border-accent-400 dark:border-slate-700 dark:text-slate-300'
+              "
+            >
+              {{ reason.label }}
+            </button>
+          }
+        </div>
+        <textarea
+          rows="3"
+          [ngModel]="feedbackComment()"
+          (ngModelChange)="feedbackComment.set($event)"
+          placeholder="e.g. wrong price, irrelevant products..."
+          class="mt-3 w-full resize-none rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-accent-400 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+        ></textarea>
+        @if (feedbackError()) {
+          <p class="mt-2 text-xs text-red-600" role="alert">
+            Feedback could not be saved. Please try again.
+          </p>
+        }
+        <div class="mt-4 flex justify-end gap-2">
+          <button
+            type="button"
+            (click)="cancelFeedbackPrompt()"
+            [disabled]="feedbackSubmitting()"
+            class="rounded-lg px-3 py-1.5 text-sm font-medium text-slate-600 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:text-slate-300 dark:hover:bg-slate-800"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            (click)="submitThumbsDownFeedback()"
+            [disabled]="feedbackSubmitting()"
+            class="rounded-lg bg-accent-700 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-accent-800 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {{ feedbackSubmitting() ? 'Submitting…' : 'Submit' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+}

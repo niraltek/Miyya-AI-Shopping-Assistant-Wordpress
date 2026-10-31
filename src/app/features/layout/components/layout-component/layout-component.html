@@ -1,0 +1,145 @@
+<div class="flex flex-col">
+  <header
+    class="sticky top-0 z-30 border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
+  >
+    <div class="flex h-14 w-full items-center gap-4 px-4 sm:px-5">
+      <a
+        routerLink="/connect"
+        aria-label="Miyya home"
+        class="flex shrink-0 cursor-pointer items-center gap-3 rounded-lg outline-hidden transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:ring-accent-300"
+      >
+        <img [src]="miyyaIconSrc" alt="Miyya" width="36" height="36" class="shrink-0" />
+
+        <div class="min-w-0">
+          <p
+            class="truncate text-sm font-semibold leading-tight text-slate-800 dark:text-slate-100"
+          >
+            Miyya
+          </p>
+
+          <p class="mt-0.5 truncate text-[10px] leading-tight text-slate-400 dark:text-slate-500">
+            AI Shopping Assistant
+          </p>
+        </div>
+      </a>
+
+      <nav class="aa-navigation ml-5 hidden min-w-0 flex-1 sm:block" aria-label="Sections">
+        <div class="flex h-full items-center gap-1 overflow-x-auto scrollbar-hide">
+          @for (item of navItems; track item.path) {
+            <a
+              #tabLink
+              [routerLink]="item.path"
+              routerLinkActive
+              #rla="routerLinkActive"
+              [attr.data-active]="rla.isActive"
+              [attr.aria-current]="rla.isActive ? 'page' : null"
+              (click)="syncIndicator()"
+              class="group flex h-10 shrink-0 items-center gap-2 rounded-lg px-3 text-sm font-medium outline-hidden transition-all duration-200"
+              [class]="
+                rla.isActive
+                  ? 'bg-accent-50 text-accent-700 dark:bg-accent-500/10 dark:text-accent-300'
+                  : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100'
+              "
+            >
+              <svg
+                [lucideIcon]="item.icon"
+                class="h-4 w-4 shrink-0 transition-transform duration-200 group-hover:scale-110"
+              ></svg>
+
+              <span class="whitespace-nowrap"> {{ item.label }} </span>
+            </a>
+          }
+        </div>
+      </nav>
+
+      <div class="ml-auto flex shrink-0 items-center gap-1">
+        <button
+          type="button"
+          (click)="theme.toggleTheme()"
+          [attr.aria-label]="theme.isDarkMode() ? 'Switch to light mode' : 'Switch to dark mode'"
+          class="rounded-xl p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+        >
+          <span class="relative block h-5 w-5">
+            <svg
+              lucideSun
+              class="absolute inset-0 h-5 w-5 transition-all duration-300"
+              [class]="
+                theme.isDarkMode()
+                  ? 'rotate-90 scale-0 opacity-0'
+                  : 'rotate-0 scale-100 opacity-100'
+              "
+            ></svg>
+
+            <svg
+              lucideMoon
+              class="absolute inset-0 h-5 w-5 transition-all duration-300"
+              [class]="
+                theme.isDarkMode()
+                  ? 'rotate-0 scale-100 opacity-100'
+                  : '-rotate-90 scale-0 opacity-0'
+              "
+            ></svg>
+          </span>
+        </button>
+
+        <button
+          type="button"
+          (click)="toggleMobileNav()"
+          aria-label="Toggle navigation"
+          class="rounded-xl p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-800 sm:hidden dark:text-slate-400 dark:hover:bg-slate-800"
+        >
+          <svg lucideMenu class="h-5 w-5"></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  @if (mobileNavOpen()) {
+    <div class="sm:hidden">
+      <div
+        class="aa-fade fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-sm"
+        (click)="closeMobileNav()"
+      ></div>
+
+      <nav
+        class="aa-rise fixed inset-x-0 top-0 z-50 rounded-b-2xl border-b border-slate-200 bg-white p-3 shadow-xl dark:border-slate-800 dark:bg-slate-900"
+        aria-label="Sections"
+      >
+        @for (item of navItems; track item.path; let i = $index) {
+          <a
+            [routerLink]="item.path"
+            (click)="closeMobileNav()"
+            routerLinkActive
+            #rlaMobile="routerLinkActive"
+            [attr.aria-current]="rlaMobile.isActive ? 'page' : null"
+            class="aa-rise aa-stagger flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition"
+            [style]="'--aa-i:' + i"
+            [class]="
+              rlaMobile.isActive
+                ? 'bg-accent-50 text-accent-700 dark:bg-accent-500/10 dark:text-accent-300'
+                : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'
+            "
+          >
+            <svg [lucideIcon]="item.icon" class="h-5 w-5 shrink-0"></svg>
+
+            <span> {{ item.label }} </span>
+          </a>
+        }
+      </nav>
+    </div>
+  }
+  @if (!onSetupScreen()) {
+    <app-subscription-banner-component />
+  }
+
+  <main class="min-w-0 flex-1">
+    <router-outlet />
+  </main>
+  <footer class="px-4 py-2 text-right text-[10px] text-slate-400" [title]="buildDetails">
+    Plugin frontend v{{ version }} · {{ commit }}
+  </footer>
+</div>
+
+@defer (on idle) {
+  <app-chat-component />
+}

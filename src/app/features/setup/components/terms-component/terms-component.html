@@ -1,0 +1,209 @@
+<div
+  class="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/55 p-4 backdrop-blur-sm"
+  role="presentation"
+  (click)="close()"
+>
+  <section
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="terms-title"
+    class="relative flex max-h-[85vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-slate-900"
+    (click)="$event.stopPropagation()"
+  >
+    <header
+      class="flex items-start gap-4 border-b border-slate-100 p-6 pr-14 dark:border-slate-800"
+    >
+      <span
+        class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent-50 text-accent-600 dark:bg-accent-500/10 dark:text-accent-300"
+      >
+        <svg lucideShieldCheck class="h-5 w-5"></svg>
+      </span>
+      <div>
+        <p class="text-sm font-semibold text-accent-600 dark:text-accent-300">
+          Connection &amp; Data Use
+        </p>
+        <h2
+          id="terms-title"
+          class="mt-1 text-xl font-bold tracking-tight text-slate-900 dark:text-slate-50"
+        >
+          Store connection and your data
+        </h2>
+        <p class="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400">
+          By connecting your store, you let Miyya securely read the information it needs to work.
+        </p>
+      </div>
+      <button
+        type="button"
+        (click)="close()"
+        aria-label="Close terms"
+        class="absolute right-4 top-4 rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 focus-visible:ring-2 focus-visible:ring-accent-300 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+      >
+        <svg lucideX class="h-5 w-5"></svg>
+      </button>
+    </header>
+
+    <div class="overflow-y-auto px-6 pb-2 pt-1">
+      <section
+        aria-labelledby="connection-title"
+        class="mt-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900"
+      >
+        <div class="flex items-center gap-3">
+          <span
+            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-300"
+          >
+            <svg lucideStore class="h-5 w-5"></svg>
+          </span>
+          <div>
+            <h3
+              id="connection-title"
+              class="text-lg font-semibold text-slate-900 dark:text-slate-100"
+            >
+              Store connection
+            </h3>
+            <p class="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
+              You stay in control of your store.
+            </p>
+          </div>
+        </div>
+
+        <ul class="mt-5 space-y-3">
+          <li class="flex items-start gap-3 text-sm leading-6 text-slate-600 dark:text-slate-400">
+            <svg
+              lucideCheck
+              class="mt-1 h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400"
+            ></svg>
+            <span>
+              <strong
+                class="font-semibold text-slate-900 dark:text-slate-100"
+                data-testid="terms-auto-approval"
+                >The connection is approved automatically.</strong
+              >
+              Press <strong class="font-semibold">Allow &amp; connect</strong> and Miyya approves it
+              for you, so you skip WooCommerce's own Approve screen. Pressing the button is your
+              consent.
+            </span>
+          </li>
+          <li class="flex items-start gap-3 text-sm leading-6 text-slate-600 dark:text-slate-400">
+            <svg
+              lucideCheck
+              class="mt-1 h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400"
+            ></svg>
+            <span
+              >Automatic approval creates a read-only key in your store (WooCommerce &rarr; Settings
+              &rarr; Advanced &rarr; REST API) and sends it securely to Miyya. You can revoke it
+              there at any time.</span
+            >
+          </li>
+          <li class="flex items-start gap-3 text-sm leading-6 text-slate-600 dark:text-slate-400">
+            <svg
+              lucideCheck
+              class="mt-1 h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400"
+            ></svg>
+            <span
+              >If automatic approval isn't possible, you'll see WooCommerce's own Approve screen.
+              Nothing connects until you approve it there.</span
+            >
+          </li>
+          <li class="flex items-start gap-3 text-sm leading-6 text-slate-600 dark:text-slate-400">
+            <svg
+              lucideCheck
+              class="mt-1 h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400"
+            ></svg>
+            <span
+              >Miyya only reads your products, categories, prices and stock. It can't add, change or
+              delete anything in your store.</span
+            >
+          </li>
+          <li class="flex items-start gap-3 text-sm leading-6 text-slate-600 dark:text-slate-400">
+            <svg
+              lucideCheck
+              class="mt-1 h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400"
+            ></svg>
+            <span
+              >Disconnect any time from Settings. This stops all future access.</span
+            >
+          </li>
+        </ul>
+      </section>
+
+      <section
+        aria-labelledby="privacy-title"
+        class="mt-4 rounded-2xl border border-emerald-100 bg-emerald-50/70 p-5 dark:border-emerald-500/20 dark:bg-emerald-500/10"
+      >
+        <div class="flex items-center gap-3">
+          <span
+            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white"
+          >
+            <svg lucideLockKeyhole class="h-5 w-5"></svg>
+          </span>
+          <div>
+            <h3
+              id="privacy-title"
+              class="text-lg font-semibold text-emerald-950 dark:text-emerald-100"
+            >
+              Your data stays private
+            </h3>
+            <p class="mt-0.5 text-sm text-emerald-900/80 dark:text-emerald-200/80">
+              We handle your store data with care.
+            </p>
+          </div>
+        </div>
+
+        <ul class="mt-5 space-y-3">
+          <li
+            class="flex items-start gap-3 text-sm leading-6 text-emerald-950/85 dark:text-emerald-100/85"
+          >
+            <svg
+              lucideCheck
+              class="mt-1 h-4 w-4 shrink-0 text-emerald-700 dark:text-emerald-300"
+            ></svg>
+            <span
+              >Connecting authorizes sending your store details, catalog and chat context to Miyya for the hosted service. Read-only order access supports questions from signed-in customers.</span
+            >
+          </li>
+          <li
+            class="flex items-start gap-3 text-sm leading-6 text-emerald-950/85 dark:text-emerald-100/85"
+          >
+            <svg
+              lucideCheck
+              class="mt-1 h-4 w-4 shrink-0 text-emerald-700 dark:text-emerald-300"
+            ></svg>
+            <span>Miyya sends product text and relevant chat context to OpenAI for embeddings and AI-generated answers. Do not include unnecessary personal or sensitive information in chat.</span>
+          </li>
+          <li
+            class="flex items-start gap-3 text-sm leading-6 text-emerald-950/85 dark:text-emerald-100/85"
+          >
+            <svg
+              lucideCheck
+              class="mt-1 h-4 w-4 shrink-0 text-emerald-700 dark:text-emerald-300"
+            ></svg>
+            <span
+              >We protect your data with reasonable security measures.</span
+            >
+          </li>
+        </ul>
+      </section>
+
+      <p class="mt-4 text-sm">
+        <a href="https://niraltek.com/privacy-policy/" target="_blank" rel="noopener noreferrer" class="underline">Company website privacy policy</a>
+        &middot; <a href="https://openai.com/policies/privacy-policy/" target="_blank" rel="noopener noreferrer" class="underline">OpenAI privacy policy</a>
+      </p>
+
+      <p class="mb-4 mt-5 text-xs leading-5 text-slate-500 dark:text-slate-400">
+        By selecting Allow &amp; connect, you authorize the connection and data processing described above and confirm you are authorized to connect this store.
+      </p>
+    </div>
+
+    <footer class="flex justify-end border-t border-slate-100 p-4 dark:border-slate-800">
+      <button
+        #closeButton
+        type="button"
+        (click)="close()"
+        data-testid="terms-close"
+        class="inline-flex h-11 items-center justify-center rounded-xl bg-accent-500 px-6 text-sm font-semibold text-white shadow-sm transition hover:bg-accent-600 focus-visible:ring-2 focus-visible:ring-accent-300"
+      >
+        Close
+      </button>
+    </footer>
+  </section>
+</div>

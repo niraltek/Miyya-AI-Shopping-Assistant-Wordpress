@@ -1,0 +1,62 @@
+<div
+  class="h-full rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900"
+>
+  <div class="flex items-center gap-3">
+    <span
+      class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-50 text-accent-600 dark:bg-accent-500/10 dark:text-accent-300"
+    >
+      <svg lucideLayers class="h-5 w-5"></svg>
+    </span>
+    <h3 class="text-base font-semibold text-slate-900 dark:text-slate-50">Sync includes</h3>
+  </div>
+
+  <ul class="mt-5 space-y-3.5">
+    @for (item of includes; track item.title) {
+      <li class="flex items-start gap-3">
+        <span
+          class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-500/15"
+        >
+          <svg lucideCheck class="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400"></svg>
+        </span>
+        <span class="min-w-0">
+          <span class="block text-sm font-medium text-slate-800 dark:text-slate-100">{{
+            item.title
+          }}</span>
+          <span class="block text-xs text-slate-500 dark:text-slate-400">{{ item.detail }}</span>
+        </span>
+      </li>
+    }
+  </ul>
+
+  <hr class="my-5 border-slate-100 dark:border-slate-800" />
+
+  <div
+    class="flex items-start gap-3 rounded-2xl border border-emerald-100 bg-emerald-50/70 p-4 dark:border-emerald-500/20 dark:bg-emerald-500/10"
+  >
+    <span
+      class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500 text-white"
+    >
+      <svg lucideShieldCheck class="h-5 w-5"></svg>
+    </span>
+    <div>
+      <p class="text-sm font-semibold text-emerald-900 dark:text-emerald-200">How your data is used</p>
+      <p class="mt-0.5 text-xs text-emerald-800/80 dark:text-emerald-300/70">
+        We use secure read-only access to fetch your products. Miyya sends product text to OpenAI for AI indexing and uses relevant catalog and chat context for AI answers.
+      </p>
+    </div>
+  </div>
+
+  @if (showTrustPoints()) {
+    <ul class="mt-4 space-y-2">
+      @for (point of trustPoints; track point) {
+        <li class="flex items-start gap-2.5 text-xs text-slate-500 dark:text-slate-400">
+          <svg
+            lucideCheck
+            class="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-600 dark:text-emerald-400"
+          ></svg>
+          {{ point }}
+        </li>
+      }
+    </ul>
+  }
+</div>

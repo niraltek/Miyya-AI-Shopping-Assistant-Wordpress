@@ -1,0 +1,380 @@
+<div [class]="embedded() ? '' : 'mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8'">
+  @if (notFound()) {
+    <div
+      class="mx-auto max-w-xl rounded-2xl border border-slate-200 bg-white p-10 text-center dark:border-slate-800 dark:bg-slate-900"
+    >
+      <h1 class="text-xl font-semibold text-slate-800 dark:text-slate-100">Sync not found</h1>
+      <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">
+        This catalog sync doesn't exist or doesn't belong to this store.
+      </p>
+      <button
+        type="button"
+        (click)="goToDashboard()"
+        class="mt-6 inline-flex items-center rounded-xl bg-accent-500 px-4 py-2 text-sm font-medium text-white shadow-sm outline-hidden transition hover:text-white hover:bg-accent-600 focus-visible:ring-2 focus-visible:ring-accent-300 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900"
+      >
+        Go to Dashboard
+      </button>
+    </div>
+  } @else if (!status()) {
+    <div class="aa-fade mx-auto max-w-3xl">
+      <div class="aa-skeleton h-7 w-44 rounded-lg"></div>
+      <div class="aa-skeleton mt-2 h-4 w-64 rounded"></div>
+
+      <div
+        class="mt-6 space-y-3 rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900"
+      >
+        @for (row of skeletonRows; track row) {
+          <div class="flex items-center gap-3">
+            <div class="aa-skeleton h-4 w-4 shrink-0 rounded-full"></div>
+            <div class="aa-skeleton h-4 rounded" [style.width.%]="row"></div>
+          </div>
+        }
+      </div>
+
+      <div class="mt-6">
+        <div class="aa-skeleton h-3 w-full rounded-full"></div>
+      </div>
+    </div>
+  } @else {
+    <div
+      class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900"
+    >
+      <div class="mb-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div class="flex min-w-0 items-center gap-4">
+          <span
+            class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-white shadow-lg"
+            [class]="
+              isFailed()
+                ? 'bg-linear-to-br from-rose-500 to-rose-600 shadow-rose-500/25'
+                : isFinished()
+                  ? 'bg-linear-to-br from-emerald-500 to-emerald-600 shadow-emerald-500/25'
+                  : 'bg-linear-to-br from-accent-500 to-accent-700 shadow-accent-500/25'
+            "
+          >
+            @if (isFailed()) {
+              <svg lucideX class="h-6 w-6"></svg>
+            } @else if (isFinished()) {
+              <svg lucideCheck class="h-6 w-6"></svg>
+            } @else {
+              <svg lucidePackage class="h-6 w-6"></svg>
+            }
+          </span>
+          <div class="min-w-0">
+            <h1 class="text-lg font-semibold text-slate-900 dark:text-slate-50">
+              {{
+                isFailed()
+                  ? 'Catalog sync failed'
+                  : isFinished()
+                    ? 'Catalog sync completed'
+                    : 'Sync
+            in progress'
+              }}
+            </h1>
+            <p
+              class="mt-0.5 text-sm"
+              [class]="
+                isFailed()
+                  ? 'text-rose-600 dark:text-rose-400'
+                  : 'text-slate-500 dark:text-slate-400'
+              "
+            >
+              {{
+                isFinished()
+                  ? 'Your catalog is up to date.'
+                  : "We're importing your WooCommerce
+            products. This may take a few minutes."
+              }}
+            </p>
+          </div>
+        </div>
+
+        @if (status()?.startedAt; as startedAt) {
+          <div
+            class="flex shrink-0 items-center gap-3 self-start rounded-xl bg-accent-50 px-4 py-2.5 sm:self-auto dark:bg-accent-500/10"
+          >
+            <svg lucideClock class="h-5 w-5 text-accent-600 dark:text-accent-300"></svg>
+            <div class="text-xs leading-tight">
+              <p class="font-semibold text-accent-700 dark:text-accent-300">
+                Started at {{ startedAt | date: 'shortTime' }}
+              </p>
+              @if (elapsedLabel(); as elapsed) {
+                <p class="mt-0.5 text-slate-500 dark:text-slate-400">
+                  {{ isFinished() ? 'Took' : 'Elapsed:' }} {{ elapsed }}
+                </p>
+              }
+            </div>
+          </div>
+        }
+      </div>
+
+      <ul
+        class="relative rounded-xl border border-slate-100 bg-slate-50/60 px-4 py-2 dark:border-slate-800 dark:bg-slate-800/40"
+      >
+        @for (stage of stageKeys; track stage; let i = $index; let last = $last) {
+          <li class="relative flex items-start gap-3 py-2.5 text-sm">
+            @if (!last) {
+              <span
+                aria-hidden="true"
+                class="absolute top-7 left-1.75 h-[calc(100%-1rem)] w-0.5 rounded-full transition-colors duration-500"
+                [class]="
+                  stepState(i) === 'done'
+                    ? 'bg-emerald-400 dark:bg-emerald-500/60'
+                    : 'bg-slate-200 dark:bg-slate-700'
+                "
+              ></span>
+            }
+
+            <span
+              class="relative z-10 mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-slate-50 dark:bg-slate-900"
+            >
+              @switch (stepState(i)) {
+                @case ('done') {
+                  <svg lucideCheck class="aa-pop h-4 w-4 text-emerald-500"></svg>
+                }
+                @case ('error') {
+                  <svg lucideX class="aa-pop h-4 w-4 text-rose-500"></svg>
+                }
+                @case ('active') {
+                  <span
+                    class="absolute inline-flex h-3 w-3 animate-ping rounded-full bg-accent-500 opacity-60"
+                  ></span>
+                  <span
+                    class="relative inline-flex h-2.5 w-2.5 rounded-full bg-linear-to-br from-accent-400 to-accent-600 shadow-sm shadow-accent-500/40"
+                  ></span>
+                }
+                @default {
+                  <span
+                    class="h-3.5 w-3.5 rounded-full border-2 border-slate-200 dark:border-slate-700"
+                  ></span>
+                }
+              }
+            </span>
+
+            <span class="min-w-0 flex-1">
+              <span
+                class="block transition-colors duration-300"
+                [class]="
+                  stepState(i) === 'error'
+                    ? 'font-medium text-rose-600 dark:text-rose-400'
+                    : stepState(i) === 'pending'
+                      ? 'text-slate-400 dark:text-slate-500'
+                      : stepState(i) === 'active'
+                        ? 'font-semibold text-slate-900 dark:text-slate-50'
+                        : 'text-slate-700 dark:text-slate-200'
+                "
+              >
+                {{ stageLabels[stage] }}
+              </span>
+              <span class="mt-0.5 block text-xs text-slate-500 dark:text-slate-400">{{
+                stepDetail(i)
+              }}</span>
+            </span>
+
+            @if (stepState(i) === 'active') {
+              <span
+                class="inline-flex shrink-0 items-center gap-2 text-xs font-medium text-accent-700 dark:text-accent-300"
+              >
+                <span
+                  class="h-3.5 w-3.5 animate-spin rounded-full border-2 border-accent-200 border-t-accent-600"
+                ></span>
+                In progress…
+              </span>
+            } @else if (stepState(i) === 'pending') {
+              <span class="shrink-0 text-xs text-slate-400 dark:text-slate-500">Pending</span>
+            } @else if (stepState(i) === 'done' && stageTimes()[i]) {
+              <span class="shrink-0 text-xs tabular-nums text-slate-400 dark:text-slate-500">
+                {{ stageTimes()[i] | date: 'shortTime' }}
+              </span>
+            }
+          </li>
+        }
+      </ul>
+
+      <div class="mt-6">
+        <div
+          class="mb-2 flex items-center justify-between text-xs font-semibold text-slate-700 dark:text-slate-200"
+        >
+          <span>Overall progress</span>
+          <span
+            class="tabular-nums"
+            [class]="
+              isFailed()
+                ? 'text-rose-600 dark:text-rose-400'
+                : 'text-accent-700 dark:text-accent-300'
+            "
+            >{{ percent() }}%</span
+          >
+        </div>
+        <div
+          class="h-2.5 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800"
+          role="progressbar"
+          [attr.aria-valuenow]="percent()"
+          aria-valuemin="0"
+          aria-valuemax="100"
+        >
+          <div
+            class="relative h-full overflow-hidden rounded-full transition-all duration-700 ease-out"
+            [class]="isFailed() ? 'bg-rose-500' : 'bg-linear-to-r from-accent-400 to-accent-600'"
+            [style.width.%]="percent()"
+          >
+            @if (!isFinished()) {
+              <span
+                aria-hidden="true"
+                class="aa-sweep absolute inset-y-0 w-1/3 bg-linear-to-r from-transparent via-white/50 to-transparent"
+              ></span>
+            }
+          </div>
+        </div>
+      </div>
+
+      <dl class="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
+        @for (counter of counters(); track counter.label; let i = $index) {
+          <div
+            class="aa-rise aa-stagger flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900"
+            [style]="'--aa-i:' + i"
+          >
+            <span
+              class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl"
+              [class]="
+                counter.icon === 'box'
+                  ? 'bg-accent-50 text-accent-600 dark:bg-accent-500/10 dark:text-accent-300'
+                  : counter.icon === 'file'
+                    ? 'bg-violet-50 text-violet-600 dark:bg-violet-500/10 dark:text-violet-300'
+                    : counter.icon === 'alert'
+                      ? 'bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-300'
+                      : counter.icon === 'refresh'
+                        ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-300'
+                        : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-300'
+              "
+            >
+              @switch (counter.icon) {
+                @case ('box') {
+                  <svg lucideBox class="h-5 w-5"></svg>
+                }
+                @case ('file') {
+                  <svg lucideFileText class="h-5 w-5"></svg>
+                }
+                @case ('refresh') {
+                  <svg lucideRefreshCw class="h-5 w-5"></svg>
+                }
+                @case ('alert') {
+                  <svg lucideCircleAlert class="h-5 w-5"></svg>
+                }
+                @case ('hourglass') {
+                  <svg lucideHourglass class="h-5 w-5"></svg>
+                }
+                @default {
+                  <svg lucideLayers class="h-5 w-5"></svg>
+                }
+              }
+            </span>
+            <div class="min-w-0">
+              <dt class="text-sm text-slate-500 dark:text-slate-400">{{ counter.label }}</dt>
+
+              <dd
+                class="text-2xl font-semibold tabular-nums"
+                [class]="
+                  counter.value > 0 && counter.tone === 'bad'
+                    ? 'text-rose-600 dark:text-rose-400'
+                    : counter.value > 0 && counter.tone === 'good'
+                      ? 'text-emerald-600 dark:text-emerald-400'
+                      : 'text-slate-900 dark:text-slate-50'
+                "
+              >
+                {{ counter.value }}
+              </dd>
+            </div>
+          </div>
+        }
+      </dl>
+
+      @if (showSummary()) {
+        <div
+          class="aa-rise mt-6 flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50/70 p-4 dark:border-emerald-500/25 dark:bg-emerald-500/10"
+        >
+          <span
+            class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300"
+          >
+            <svg lucideCheck class="h-4.5 w-4.5"></svg>
+          </span>
+          <div>
+            <p class="text-sm font-semibold text-emerald-900 dark:text-emerald-200">
+              {{
+                errors().length > 0
+                  ? 'Catalog sync completed, with some issues'
+                  : 'Catalog synced
+          successfully'
+              }}
+            </p>
+            <p class="mt-0.5 text-xs text-emerald-800/80 dark:text-emerald-300/70">
+              {{ status()?.productsCreated ?? 0 }} product{{
+                (status()?.productsCreated ?? 0) === 1 ? '' : 's'
+              }}
+              added, {{ status()?.productsUpdated ?? 0 }} updated. Miyya can now answer questions
+              about your catalog.
+            </p>
+          </div>
+        </div>
+      }
+      @if (errors().length > 0 && isFinished()) {
+        <div
+          class="mt-6 rounded-2xl border border-amber-200 bg-amber-50/60 p-5 dark:border-amber-500/30 dark:bg-amber-500/10"
+        >
+          <h2
+            class="flex items-center gap-2 text-sm font-semibold text-amber-800 dark:text-amber-300"
+          >
+            <svg lucideCircleAlert class="h-4 w-4"></svg>
+            Catalog sync issues ({{ errors().length }})
+          </h2>
+
+          <ul class="mt-3 divide-y divide-amber-200/70 dark:divide-amber-500/20">
+            @for (error of errors(); track error.id) {
+              <li class="flex items-center justify-between gap-3 py-2.5">
+                <div class="min-w-0">
+                  <p class="text-sm font-medium text-slate-800 dark:text-slate-100">
+                    {{ errorLabel(error) }}
+                  </p>
+                  <p class="truncate text-xs text-slate-500 dark:text-slate-400">
+                    {{ error.errorMessage ?? 'An unknown error occurred.' }}
+                  </p>
+                </div>
+                @if (error.sourceProductId != null) {
+                  <button
+                    type="button"
+                    (click)="retry(error)"
+                    [disabled]="retryingId() !== null"
+                    class="inline-flex shrink-0 items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-accent-700 transition hover:bg-accent-50 disabled:cursor-not-allowed disabled:opacity-60 dark:text-accent-300 dark:hover:bg-accent-500/10"
+                  >
+                    {{ retryingId() === error.id ? 'Retrying…' : 'Retry' }}
+                  </button>
+                }
+              </li>
+            }
+          </ul>
+
+          @if (retryError()) {
+            <p class="mt-2 text-xs text-rose-600 dark:text-rose-400">{{ retryError() }}</p>
+          }
+        </div>
+      }
+      @if (isFinished()) {
+        <div class="mt-8 flex flex-col gap-3 sm:flex-row">
+          <button
+            type="button"
+            (click)="goToDashboard()"
+            class="inline-flex items-center justify-center rounded-xl bg-accent-500 px-5 py-2.5 text-sm font-medium text-white shadow-sm outline-hidden transition hover:text-white hover:bg-accent-600 focus-visible:ring-2 focus-visible:ring-accent-300 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900"
+          >
+            Go to Dashboard
+          </button>
+          <button
+            type="button"
+            (click)="startNewSync()"
+            class="inline-flex items-center justify-center rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+          >
+            Run Again
+          </button>
+        </div>
+      }
+    </div>
+  }
+</div>

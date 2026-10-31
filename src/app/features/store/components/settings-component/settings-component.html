@@ -1,0 +1,485 @@
+<div class="px-4 py-5 sm:px-8 sm:py-6 lg:px-10">
+  <div class="mb-6">
+    <h1 class="text-2xl font-semibold text-slate-800 dark:text-slate-100">Settings</h1>
+    <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
+      Customize how Miyya looks and feels.
+    </p>
+  </div>
+
+  <div class="grid grid-cols-1 gap-5 lg:grid-cols-5 lg:items-start">
+    <div class="flex flex-col gap-5 lg:col-span-3">
+      <section
+        class="aa-rise rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900"
+      >
+        <h2 class="text-sm font-semibold text-slate-800 dark:text-slate-100">Appearance</h2>
+        <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+          Choose a theme and accent color for Miyya.
+        </p>
+
+        <div class="mt-5 grid grid-cols-2 gap-3">
+          <button
+            type="button"
+            (click)="theme.setTheme(false)"
+            [attr.aria-pressed]="!theme.isDarkMode()"
+            class="relative flex flex-col items-start gap-1 rounded-xl border-2 p-4 text-left outline-hidden transition focus-visible:ring-2 focus-visible:ring-accent-300"
+            [class]="
+              !theme.isDarkMode()
+                ? 'border-accent-500 bg-accent-50/50 dark:bg-accent-500/10'
+                : 'border-slate-200 hover:border-slate-300 dark:border-slate-700 dark:hover:border-slate-600'
+            "
+          >
+            @if (!theme.isDarkMode()) {
+              <span
+                class="absolute top-3 right-3 flex h-5 w-5 items-center justify-center rounded-full bg-accent-500 text-white"
+              >
+                <svg lucideCheck class="h-3 w-3"></svg>
+              </span>
+            }
+            <svg lucideSun class="h-5 w-5 text-amber-500"></svg>
+            <p class="mt-1 text-sm font-semibold text-slate-800 dark:text-slate-100">Light</p>
+            <p class="text-xs text-slate-400 dark:text-slate-500">Clean and bright</p>
+          </button>
+
+          <button
+            type="button"
+            (click)="theme.setTheme(true)"
+            [attr.aria-pressed]="theme.isDarkMode()"
+            class="relative flex flex-col items-start gap-1 rounded-xl border-2 p-4 text-left outline-hidden transition focus-visible:ring-2 focus-visible:ring-accent-300"
+            [class]="
+              theme.isDarkMode()
+                ? 'border-accent-500 bg-accent-50/50 dark:bg-accent-500/10'
+                : 'border-slate-200 hover:border-slate-300 dark:border-slate-700 dark:hover:border-slate-600'
+            "
+          >
+            @if (theme.isDarkMode()) {
+              <span
+                class="absolute top-3 right-3 flex h-5 w-5 items-center justify-center rounded-full bg-accent-500 text-white"
+              >
+                <svg lucideCheck class="h-3 w-3"></svg>
+              </span>
+            }
+            <svg lucideMoon class="h-5 w-5 text-indigo-500"></svg>
+            <p class="mt-1 text-sm font-semibold text-slate-800 dark:text-slate-100">Dark</p>
+            <p class="text-xs text-slate-400 dark:text-slate-500">Easy on the eyes</p>
+          </button>
+        </div>
+
+        <div class="mt-6">
+          <p class="text-sm font-medium text-slate-700 dark:text-slate-200">Accent color</p>
+          <div class="mt-3 flex flex-wrap gap-2">
+            @for (option of theme.accents; track option.name; let i = $index) {
+              <button
+                type="button"
+                (click)="selectAccent(option.name)"
+                [title]="option.name === 'miyya' ? 'Miyya blue' : option.name"
+                [attr.aria-label]="
+                  'Accent colour ' + (option.name === 'miyya' ? 'Miyya blue' : option.name)
+                "
+                [attr.aria-pressed]="theme.accent() === option.name"
+                class="aa-pop aa-stagger relative flex h-8 w-8 items-center justify-center rounded-full ring-offset-2 ring-offset-white transition-transform duration-200 hover:scale-115 active:scale-95 dark:ring-offset-slate-900"
+                [style]="'--aa-i:' + i"
+                [class]="option.swatch"
+                [class.ring-2]="theme.accent() === option.name"
+                [class.ring-slate-800]="theme.accent() === option.name"
+                [class.dark:ring-slate-100]="theme.accent() === option.name"
+              >
+                @if (theme.accent() === option.name) {
+                  <svg lucideCheck class="aa-pop h-4 w-4 text-white drop-shadow"></svg>
+                }
+              </button>
+            }
+          </div>
+
+          <div class="mt-4 flex items-center gap-3">
+            <label
+              for="custom-accent"
+              class="text-xs font-medium text-slate-500 dark:text-slate-400"
+              >Custom color</label
+            >
+            <input
+              id="custom-accent"
+              type="color"
+              [value]="theme.customColor()"
+              (input)="onCustomColorInput($event)"
+              class="h-8 w-12 cursor-pointer rounded-md border border-slate-200 bg-transparent p-0.5 dark:border-slate-700"
+            />
+            @if (theme.accent() === 'custom') {
+              <span class="text-xs text-accent-600 dark:text-accent-400">Using custom color</span>
+            }
+          </div>
+        </div>
+      </section>
+
+      <section
+        class="aa-rise aa-stagger rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900"
+        style="--aa-i: 1"
+      >
+        <h2 class="text-sm font-semibold text-slate-800 dark:text-slate-100">Design format</h2>
+        <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+          Choose how Miyya is positioned. Each format is predefined — your products, comparisons and
+          everything Miyya can do stay exactly the same.
+        </p>
+
+        <div class="mt-6 flex flex-col gap-7" role="group" aria-label="Design format">
+          @for (group of layoutGroups; track group.kind) {
+            <div>
+              <div
+                class="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 border-b border-slate-100 pb-2 dark:border-slate-800"
+              >
+                <h3
+                  class="text-xs font-semibold tracking-wider text-slate-700 uppercase dark:text-slate-200"
+                >
+                  {{ group.title }}
+                </h3>
+                <p class="text-xs text-slate-400 dark:text-slate-500">{{ group.description }}</p>
+              </div>
+
+              <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                @for (option of group.options; track option.format) {
+                  <button
+                    type="button"
+                    (click)="selectDesignFormat(option.format)"
+                    [disabled]="isLayoutLoading() || isSavingLayout()"
+                    [attr.aria-pressed]="designFormat() === option.format"
+                    class="group flex flex-col gap-3 rounded-xl border p-3 text-left outline-hidden transition focus-visible:ring-2 focus-visible:ring-accent-300 disabled:cursor-not-allowed disabled:opacity-60"
+                    [class]="
+                      designFormat() === option.format
+                        ? 'border-accent-500 bg-accent-50/60 ring-1 ring-accent-500/40 dark:bg-accent-500/10'
+                        : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50/70 dark:border-slate-700 dark:hover:border-slate-600 dark:hover:bg-slate-800/40'
+                    "
+                  >
+                    <span
+                      class="block overflow-hidden rounded-lg border border-slate-200 bg-white shadow-xs dark:border-slate-700 dark:bg-slate-950"
+                      aria-hidden="true"
+                    >
+                      <span
+                        class="flex h-5 items-center gap-1 border-b border-slate-200 bg-slate-50 px-2 dark:border-slate-700 dark:bg-slate-800/70"
+                      >
+                        <span
+                          class="h-1.5 w-1.5 rounded-full bg-slate-300 dark:bg-slate-600"
+                        ></span>
+                        <span
+                          class="h-1.5 w-1.5 rounded-full bg-slate-300 dark:bg-slate-600"
+                        ></span>
+                        <span
+                          class="h-1.5 w-1.5 rounded-full bg-slate-300 dark:bg-slate-600"
+                        ></span>
+                        <span
+                          class="ml-2 h-2 flex-1 rounded-full bg-slate-200/80 dark:bg-slate-700"
+                        ></span>
+                      </span>
+
+                      <span
+                        class="relative flex h-24 items-stretch overflow-hidden"
+                        [class.flex-row-reverse]="
+                          option.kind === 'docked' && option.side === 'right'
+                        "
+                      >
+                        @if (option.kind === 'docked') {
+                          <span
+                            class="flex w-2/5 shrink-0 flex-col gap-1.5 border-accent-200 bg-accent-50 p-2 dark:border-accent-500/30 dark:bg-accent-500/10"
+                            [class.border-r]="option.side === 'left'"
+                            [class.border-l]="option.side === 'right'"
+                          >
+                            <span class="h-1.5 w-1/2 rounded-full bg-accent-500"></span>
+                            <span class="h-2.5 w-4/5 rounded bg-white dark:bg-slate-800"></span>
+                            <span class="h-2.5 w-3/5 self-end rounded bg-accent-500/70"></span>
+                            <span
+                              class="mt-auto h-3 rounded-full border border-accent-200 bg-white dark:border-accent-500/30 dark:bg-slate-800"
+                            ></span>
+                          </span>
+                        }
+
+                        <span class="flex min-w-0 flex-1 flex-col gap-1.5 p-2.5">
+                          <span
+                            class="h-2 w-1/3 rounded-full bg-slate-200 dark:bg-slate-700"
+                          ></span>
+                          <span class="h-8 rounded bg-slate-100 dark:bg-slate-800"></span>
+                          <span class="flex gap-1.5">
+                            <span class="h-6 flex-1 rounded bg-slate-100 dark:bg-slate-800"></span>
+                            <span class="h-6 flex-1 rounded bg-slate-100 dark:bg-slate-800"></span>
+                            <span class="h-6 flex-1 rounded bg-slate-100 dark:bg-slate-800"></span>
+                          </span>
+                        </span>
+
+                        @if (option.kind === 'floating') {
+                          <span
+                            class="absolute bottom-2 flex flex-col gap-1"
+                            [class.left-2]="option.side === 'left'"
+                            [class.items-start]="option.side === 'left'"
+                            [class.right-2]="option.side === 'right'"
+                            [class.items-end]="option.side === 'right'"
+                          >
+                            <span
+                              class="flex h-9 w-14 flex-col overflow-hidden rounded-md border border-accent-200 bg-white shadow-sm dark:border-accent-500/30 dark:bg-slate-800"
+                            >
+                              <span class="h-2 shrink-0 bg-accent-500"></span>
+                              <span class="flex flex-1 flex-col gap-1 p-1">
+                                <span
+                                  class="h-1.5 w-3/4 rounded-full bg-slate-200 dark:bg-slate-600"
+                                ></span>
+                                <span
+                                  class="h-1.5 w-1/2 self-end rounded-full bg-accent-500/70"
+                                ></span>
+                              </span>
+                            </span>
+                            <span class="h-4 w-4 rounded-full bg-accent-500 shadow-sm"></span>
+                          </span>
+                        }
+                      </span>
+                    </span>
+
+                    <span class="flex items-center justify-between gap-3 px-1">
+                      <span class="text-sm font-semibold text-slate-800 dark:text-slate-100">{{
+                        option.label
+                      }}</span>
+                      <span
+                        class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border transition"
+                        [class]="
+                          designFormat() === option.format
+                            ? 'border-accent-500 bg-accent-500 text-white'
+                            : 'border-slate-300 text-transparent dark:border-slate-600'
+                        "
+                        aria-hidden="true"
+                      >
+                        <svg lucideCheck class="h-3 w-3"></svg>
+                      </span>
+                    </span>
+                    <span
+                      class="-mt-1.5 px-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400"
+                      >{{ option.description }}</span
+                    >
+                  </button>
+                }
+              </div>
+            </div>
+          }
+        </div>
+
+        <p class="mt-4 text-xs text-slate-400 dark:text-slate-500">
+          Your choice applies to your live website. With a docked side, on desktop screens the page
+          narrows to make room for Miyya and returns to normal when it closes; on tablets and phones
+          your page is left as it is and the chat opens over it. The chat here in WordPress admin
+          keeps the current design.
+        </p>
+        @if (isSavingLayout()) {
+          <p class="mt-3 text-xs text-slate-400 dark:text-slate-500">Saving…</p>
+        }
+        @if (layoutError()) {
+          <p class="mt-3 text-xs text-rose-600 dark:text-rose-400" role="alert">
+            {{ layoutError() }}
+          </p>
+        }
+      </section>
+    </div>
+
+    <div class="flex flex-col gap-5 lg:col-span-2">
+      <section
+        class="aa-rise aa-stagger rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900"
+        style="--aa-i: 1"
+      >
+        <h2 class="text-sm font-semibold text-slate-800 dark:text-slate-100">Store connection</h2>
+        <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Manage your connected store.</p>
+
+        @if (checkingConnection()) {
+          <div
+            role="status"
+            aria-live="polite"
+            class="mt-4 flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400"
+          >
+            <span
+              aria-hidden="true"
+              class="h-4 w-4 animate-spin rounded-full border-2 border-accent-500/30 border-t-accent-500"
+            ></span>
+            Checking connection…
+          </div>
+        } @else if (isConnected()) {
+          <span
+            class="mt-4 inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 ring-1 ring-inset ring-emerald-600/20 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-400/20"
+          >
+            Connected
+          </span>
+          <p class="mt-2 text-xs text-slate-500 dark:text-slate-400">
+            Connected to
+            <span class="font-medium text-slate-700 dark:text-slate-200">{{ storeHost() }}</span>
+            with read-only access.
+          </p>
+
+          @if (!siteLinked()) {
+            <div
+              class="aa-rise mt-5 rounded-xl border border-amber-200 bg-amber-50/70 p-4 dark:border-amber-500/30 dark:bg-amber-500/10"
+            >
+              <p class="text-sm font-medium text-amber-900 dark:text-amber-200">
+                This site lost its secure link to the backend
+              </p>
+              <p class="mt-1 text-xs text-amber-800/80 dark:text-amber-200/70">
+                The store is still connected, but this WordPress no longer holds the credential
+                needed to manage or disconnect it — deleting the plugin, or changing the backend
+                URL, removes it. Reconnecting restores the link and keeps your synced catalog.
+              </p>
+              <button
+                type="button"
+                (click)="goToReconnect()"
+                class="mt-4 inline-flex items-center rounded-lg border border-amber-300 px-3.5 py-2 text-xs font-medium text-amber-900 transition hover:bg-amber-100 dark:border-amber-500/40 dark:text-amber-200 dark:hover:bg-amber-500/10"
+              >
+                Reconnect your store
+              </button>
+            </div>
+          } @else if (!confirmingDisconnect()) {
+            <button
+              type="button"
+              (click)="askDisconnect()"
+              class="mt-5 inline-flex items-center rounded-xl border border-rose-200 px-4 py-2 text-sm font-medium text-rose-700 transition hover:bg-rose-50 dark:border-rose-500/30 dark:text-rose-300 dark:hover:bg-rose-500/10"
+            >
+              Disconnect your store
+            </button>
+          } @else {
+            <div
+              class="aa-rise mt-5 rounded-xl border border-rose-200 bg-rose-50/70 p-4 dark:border-rose-500/30 dark:bg-rose-500/10"
+            >
+              <p class="text-sm font-medium text-rose-800 dark:text-rose-300">
+                Disconnect this store?
+              </p>
+              <p class="mt-1 text-xs text-rose-700/80 dark:text-rose-300/70">
+                Miyya will stop reading this store. This removes the credentials we hold —
+                WooCommerce has no API to revoke a key remotely, so also delete it under WooCommerce
+                &rsaquo; Settings &rsaquo; Advanced &rsaquo; REST API.
+              </p>
+
+              <div class="mt-4 flex gap-3">
+                <button
+                  type="button"
+                  (click)="confirmDisconnect()"
+                  [disabled]="isDisconnecting()"
+                  [attr.aria-busy]="isDisconnecting()"
+                  class="inline-flex items-center gap-2 rounded-lg bg-rose-600 px-3.5 py-2 text-xs font-medium text-white outline-hidden transition hover:text-white hover:bg-rose-700 focus-visible:ring-2 focus-visible:ring-rose-300 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 dark:focus-visible:ring-offset-slate-900"
+                >
+                  @if (isDisconnecting()) {
+                    <span
+                      aria-hidden="true"
+                      class="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/40 border-t-white"
+                    ></span>
+                    Disconnecting…
+                  } @else {
+                    Yes, disconnect
+                  }
+                </button>
+                <button
+                  type="button"
+                  (click)="cancelDisconnect()"
+                  [disabled]="isDisconnecting()"
+                  class="inline-flex items-center rounded-lg border border-slate-200 px-3.5 py-2 text-xs font-medium text-slate-700 transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                >
+                  Cancel
+                </button>
+              </div>
+
+              @if (disconnectError()) {
+                <p class="mt-3 text-xs text-rose-700 dark:text-rose-300">{{ disconnectError() }}</p>
+
+                @if (disconnectNeedsReconnect()) {
+                  <p class="mt-1 text-xs text-rose-700/80 dark:text-rose-300/70">
+                    This WordPress site lost its backend link — reconnecting fixes it.
+                  </p>
+                  <button
+                    type="button"
+                    (click)="goToReconnect()"
+                    class="mt-3 inline-flex items-center rounded-lg border border-rose-300 px-3.5 py-2 text-xs font-medium text-rose-700 transition hover:bg-rose-100 dark:border-rose-500/40 dark:text-rose-300 dark:hover:bg-rose-500/10"
+                  >
+                    Reconnect your store
+                  </button>
+                }
+              }
+            </div>
+          }
+        } @else {
+          <span
+            class="mt-4 inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700 ring-1 ring-inset ring-amber-600/20 dark:bg-amber-500/10 dark:text-amber-300 dark:ring-amber-400/20"
+          >
+            Not connected
+          </span>
+          <p class="mt-2 text-xs text-slate-500 dark:text-slate-400">
+            Connect your store to enable catalog sync and product insights.
+          </p>
+          <a
+            routerLink="/connect"
+            class="aa-lift mt-4 flex items-center justify-center gap-2 rounded-xl bg-linear-to-br from-accent-500 to-accent-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-accent-500/25 outline-hidden hover:text-white focus-visible:ring-2 focus-visible:ring-accent-300 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900"
+          >
+            Connect your store
+            <svg lucideArrowRight class="h-4 w-4"></svg>
+          </a>
+        }
+      </section>
+
+      <section
+        class="aa-rise aa-stagger rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900"
+        style="--aa-i: 2"
+      >
+        <h2 class="text-sm font-semibold text-slate-800 dark:text-slate-100">Live website chat</h2>
+        <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+          Choose who can see Miyya on your website.
+        </p>
+
+        <div
+          class="mt-4 flex flex-col gap-2"
+          role="radiogroup"
+          aria-label="Who sees Miyya on your website"
+        >
+          @for (option of visibilityOptions; track option.mode) {
+            <button
+              type="button"
+              role="radio"
+              (click)="selectVisibility(option.mode)"
+              [disabled]="isVisibilityLoading() || isSaving()"
+              [attr.aria-checked]="visibilityMode() === option.mode"
+              class="flex items-start gap-2.5 rounded-xl border-2 p-3 text-left outline-hidden transition focus-visible:ring-2 focus-visible:ring-accent-300 disabled:cursor-not-allowed disabled:opacity-60"
+              [class]="
+                visibilityMode() === option.mode
+                  ? 'border-accent-500 bg-accent-50/50 dark:bg-accent-500/10'
+                  : 'border-slate-200 hover:border-slate-300 dark:border-slate-700 dark:hover:border-slate-600'
+              "
+            >
+              <span
+                class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400"
+              >
+                @switch (option.mode) {
+                  @case ('admins') {
+                    <svg lucideShieldCheck class="h-4 w-4"></svg>
+                  }
+                  @case ('hidden') {
+                    <svg lucideEyeOff class="h-4 w-4"></svg>
+                  }
+                  @default {
+                    <svg lucideGlobe class="h-4 w-4"></svg>
+                  }
+                }
+              </span>
+              <span class="min-w-0 flex-1">
+                <span class="block text-sm font-medium text-slate-700 dark:text-slate-200">{{
+                  option.label
+                }}</span>
+                <span class="block text-xs text-slate-400 dark:text-slate-500">{{
+                  option.description
+                }}</span>
+              </span>
+              @if (visibilityMode() === option.mode) {
+                <span
+                  class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent-500 text-white"
+                >
+                  <svg lucideCheck class="h-3 w-3"></svg>
+                </span>
+              }
+            </button>
+          }
+        </div>
+
+        @if (isSaving()) {
+          <p class="mt-3 text-xs text-slate-400 dark:text-slate-500">Saving…</p>
+        }
+        @if (saveError()) {
+          <p class="mt-3 text-xs text-rose-600 dark:text-rose-400">{{ saveError() }}</p>
+        }
+      </section>
+    </div>
+  </div>
+</div>
